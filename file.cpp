@@ -11,7 +11,7 @@ int GetFileList(char *buffer) {
     DIR *dr = opendir(".");
  
     if (dr == NULL) {
-        debug_print("Could not open current directory" );
+        printf("Could not open current directory" );
         return 0;
     }
  

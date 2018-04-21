@@ -17,6 +17,9 @@ file.o: file.h file.cpp
 func.o: func.h func.cpp
 	$(CXX) $(FLAGS) -c func.cpp
 
+hash.o: hash.h hash.cpp
+	$(CXX) $(FLAGS) -c hash.cpp
+
 fileServer.o: fileServer.h fileServer.cpp
 	$(CXX) $(FLAGS) -c fileServer.cpp
 
@@ -25,10 +28,10 @@ trackerServer.o: trackerServer.h trackerServer.cpp
 
 # Executables
 
-tracker: tcp.o file.o func.o trackerServer.o
+tracker: tcp.o file.o func.o hash.o debug.o trackerServer.o
 	$(CXX) $(FLAGS) -o tracker tcp.o file.o func.o trackerServer.o
 
-client: tcp.o file.o func.o fileServer.o
+client: tcp.o file.o func.o hash.o debug.o fileServer.o
 	$(CXX) $(FLAGS) -o client tcp.o file.o func.o fileServer.o
 
 clean:
