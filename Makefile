@@ -20,10 +20,10 @@ func.o: func.h func.cpp
 hash.o: hash.h hash.cpp
 	$(CXX) $(FLAGS) -c hash.cpp
 
-fileServer.o: fileServer.h fileServer.cpp
+fileServer.o: fileServer.cpp
 	$(CXX) $(FLAGS) -c fileServer.cpp
 
-trackerServer.o: trackerServer.h trackerServer.cpp
+trackerServer.o: trackerServer.cpp
 	$(CXX) $(FLAGS) -c trackerServer.cpp
 
 # Executables

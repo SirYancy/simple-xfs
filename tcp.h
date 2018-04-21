@@ -1,7 +1,11 @@
 #define MAX_LEN 1024
 
-void InitTrackingServer(int port, void *(*handler)(void *));
-void InitFileServer(int port, void *(*handler)(void *));
+void InitTrackingServer(int port);
+void InitFileServer(int port);
+
+void StartListening();
+
+int getPort();
 
 int ConnectToServer(char *serverIP, int serverPort);
 

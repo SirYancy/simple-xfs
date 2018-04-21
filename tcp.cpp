@@ -8,14 +8,16 @@
 #include <string.h>
 #include <unistd.h>
 
-void InitServer(int port, void *(*handler)(void *)) {
-    int serverSocket, clientSocket, sockaddrSize;
-    struct sockaddr_in server, client;
-    
-    // Create socket
-    serverSocket = socket(AF_INET , SOCK_STREAM , IPPROTO_TCP);
+struct sockaddr_in gAddress;
+int gSocket;
+void *(*gHandler)(void *);
 
-    if (serverSocket == -1) {
+void InitServer(int port, void *(*handler)(void *)) 
+{
+    // Create socket
+    gSocket = socket(AF_INET , SOCK_STREAM , IPPROTO_TCP);
+
+    if (gSocket == -1) {
         printf("Could not create socket\n");
         return;
     } else {
@@ -23,27 +25,46 @@ void InitServer(int port, void *(*handler)(void *)) {
     }
 
     // Prepare the sockaddr_in structure
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(port);
+    gAddress.sin_family = AF_INET;
+    gAddress.sin_addr.s_addr = INADDR_ANY;
+    gAddress.sin_port = htons(port);
 
     // Bind
-    if (bind(serverSocket,(struct sockaddr *)&server , sizeof(server)) < 0) {
+    if (bind(gSocket, (struct sockaddr *)&gAddress, sizeof(gAddress)) < 0) {
         printf("Bind failed\n");
         return;
     } else {
         printf("Binding...\n");
     }
 
+    gHandler = handler;
+
     // Listen
-    listen(serverSocket , 3);
+    listen(gSocket, 10);
+}
+
+int getPort()
+{
+    socklen_t len = sizeof(gAddress);
+    if(getsockname(gSocket, (struct sockaddr *)&gAddress, &len) == -1)
+        printf("Could not getsockname\n");
+    else
+        return ntohs(gAddress.sin_port);
+
+    return -1;
+}
+
+void StartListening()
+{
+    int clientSocket, sockaddrSize;
+    struct sockaddr_in client;
 
     // Accept and incoming connection
     printf("Waiting for incoming connections...\n");
 
     sockaddrSize = sizeof(struct sockaddr_in);
 
-    while((clientSocket = accept(serverSocket, (struct sockaddr *)&client, (socklen_t*)&sockaddrSize)) )
+    while((clientSocket = accept(gSocket, (struct sockaddr *)&client, (socklen_t*)&sockaddrSize)) )
     {
         pthread_t clientThread;
         int *newSocket = (int *)malloc(sizeof(int));
@@ -51,13 +72,11 @@ void InitServer(int port, void *(*handler)(void *)) {
 
         printf("New client connected\n");
 
-        if(pthread_create(&clientThread, NULL, handler, (void *)newSocket) < 0) {
+        if(pthread_create(&clientThread, NULL, gHandler, (void *)newSocket) < 0) {
             printf("Cannot create thread\n");
             return;
         }
     }
-
-    return;
 }
 
 void *TrackingServerHandler(void *args) {
