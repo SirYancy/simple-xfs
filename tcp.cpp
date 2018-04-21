@@ -6,57 +6,78 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <string.h>
 #include <unistd.h>
 
-void InitServer(int port, void *(*handler)(void *)) {
-    int serverSocket, clientSocket, sockaddrSize;
-    struct sockaddr_in server, client;
-    
-    // Create socket
-    serverSocket = socket(AF_INET , SOCK_STREAM , IPPROTO_TCP);
+struct sockaddr_in gAddress;
+int gSocket;
+void *(*gHandler)(void *);
 
-    if (serverSocket == -1) {
-        debug_print("Could not create socket\n");
+void InitServer(int port, void *(*handler)(void *)) 
+{
+    // Create socket
+    gSocket = socket(AF_INET , SOCK_STREAM , IPPROTO_TCP);
+
+    if (gSocket == -1) {
+        printf("Could not create socket\n");
         return;
     } else {
-        debug_print("Socket created with port %d\n", port);
+        printf("Socket created with port %d\n", port);
     }
 
     // Prepare the sockaddr_in structure
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(port);
+    gAddress.sin_family = AF_INET;
+    gAddress.sin_addr.s_addr = INADDR_ANY;
+    gAddress.sin_port = htons(port);
 
     // Bind
-    if (bind(serverSocket,(struct sockaddr *)&server , sizeof(server)) < 0) {
-        debug_print("Bind failed\n");
-        return
+    if (bind(gSocket, (struct sockaddr *)&gAddress, sizeof(gAddress)) < 0) {
+        printf("Bind failed\n");
+        return;
     } else {
-        debug_print("Binding...\n");
+        printf("Binding...\n");
     }
 
+    gHandler = handler;
+
     // Listen
-    listen(serverSocket , 3);
+    listen(gSocket, 10);
+}
+
+int getPort()
+{
+    socklen_t len = sizeof(gAddress);
+    if(getsockname(gSocket, (struct sockaddr *)&gAddress, &len) == -1)
+        printf("Could not getsockname\n");
+    else
+        return ntohs(gAddress.sin_port);
+
+    return -1;
+}
+
+void StartListening()
+{
+    int clientSocket, sockaddrSize;
+    struct sockaddr_in client;
 
     // Accept and incoming connection
     printf("Waiting for incoming connections...\n");
 
     sockaddrSize = sizeof(struct sockaddr_in);
 
-    while(clientSocket = accept(serverSocket, (struct sockaddr *)&client, (socklen_t*)&c)) {
+    while((clientSocket = accept(gSocket, (struct sockaddr *)&client, (socklen_t*)&sockaddrSize)) )
+    {
         pthread_t clientThread;
         int *newSocket = (int *)malloc(sizeof(int));
         *newSocket = clientSocket;
 
         printf("New client connected\n");
 
-        if(pthread_create(&clientThread, NULL, handler, (void *)newSocket) < 0) {
-            debug_print("Cannot create thread\n");
+        if(pthread_create(&clientThread, NULL, gHandler, (void *)newSocket) < 0) {
+            printf("Cannot create thread\n");
             return;
         }
     }
-
-    return;
 }
 
 void *TrackingServerHandler(void *args) {
@@ -72,9 +93,9 @@ void *TrackingServerHandler(void *args) {
     }   
 
     if(recvSize == 0) {
-        debug_print("Client disconnected\n");
+        printf("Client disconnected\n");
     } else if(recvSize == -1) {
-        debug_print("Recv error\n");
+        printf("Recv error\n");
     }
 
     // Free args
@@ -82,6 +103,8 @@ void *TrackingServerHandler(void *args) {
 
     // Close the socket
     close(socket);
+    
+    return NULL;
 }
 
 void *FileServerHandler(void *args) {
@@ -97,9 +120,9 @@ void *FileServerHandler(void *args) {
     }   
 
     if(recvSize == 0) {
-        debug_print("Client disconnected\n");
+        printf("Client disconnected\n");
     } else if(recvSize == -1) {
-        debug_print("Recv error\n");
+        printf("Recv error\n");
     }
 
     // Free args
@@ -107,10 +130,12 @@ void *FileServerHandler(void *args) {
 
     // Close the socket
     close(socket);
+
+    return NULL;
 }
 
 void InitTrackingServer(int port) {
-    InitServer(port, TrackingServerHanlder);
+    InitServer(port, TrackingServerHandler);
 }
 
 void InitFileServer(int port) {
@@ -124,7 +149,7 @@ int ConnectToServer(char *serverIP, int serverPort) {
     // Create socket for connecting to server
     serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (serverSocket == -1) {
-        debug_print("Socket creation failed\n");
+        printf("Socket creation failed\n");
         return serverSocket;
     }
 
@@ -133,8 +158,8 @@ int ConnectToServer(char *serverIP, int serverPort) {
     server.sin_port = htons(serverPort);
 
     // Connect to server
-    if(connect(gServerSocket, (struct sockaddr *)&server , sizeof(server)) < 0) {
-        debug_print("Connection failed\n");
+    if(connect(serverSocket, (struct sockaddr *)&server , sizeof(server)) < 0) {
+        printf("Connection failed\n");
         return serverSocket;
     }
 
@@ -155,7 +180,7 @@ void RecvACK(int socket) {
     RecvFromSocket(socket, buffer);
 
     if (strncmp("ACK", buffer, strlen("ACK") != 0)) {
-        debug_print("Error, expected ACK to be received: %s\n", buffer);
+        printf("Error, expected ACK to be received: %s\n", buffer);
     }
 }
 
