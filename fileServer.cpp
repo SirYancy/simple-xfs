@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <string.h>
 #include "tcp.h"
+#include <dirent.h>
 
 using namespace std;
 
@@ -11,6 +12,7 @@ char *tracker_ip;
 
 int live = 1;
 
+void readDirectory(char *buffer, char *folder);
 void *listenerFunc(void *args);
 void *clientFunc(void *args);
 
@@ -45,7 +47,7 @@ int main(int argc, char* argv[]) {
 
 void *clientFunc(void *args)
 {
-    ConnectToServer(tracker_ip, tracker_port);
+    int socket = ConnectToServer(tracker_ip, tracker_port);
     char buffer[MAX_LEN];
 
     int menu_choice;
@@ -54,9 +56,10 @@ void *clientFunc(void *args)
     {
         memset(buffer, '\0', MAX_LEN);
 
-        printf("Welcome, \n%s\n%s\n%s",
+        printf("Welcome, \n%s\n%s\n%s\n%s",
                 "What do you want to do?",
                 "1 - Exit",
+                "2 - Register",
                 "> ");
         scanf("%d", &menu_choice);
 
@@ -69,12 +72,37 @@ void *clientFunc(void *args)
                 printf("Exiting\n");
                 live = 0;
                 break;
+            case 2: 
+                char folder[MAX_LEN];
+   		sprintf(folder, "./files");
+		readDirectory(buffer, folder);
+		SendToSocket(socket, buffer, strlen(buffer));
+		break;
             default:
                 printf("Invalid input\n");
                 break;
         }
     }
     return NULL;
+}
+
+void readDirectory(char* buffer, char* folder) 
+{
+    dirent* dir_entry;
+    DIR* dir; 
+    dir = opendir(folder);
+    if (dir)
+    {
+	while (true)
+	{ 
+	    dir_entry = readdir(dir);
+	    if (dir_entry ==  NULL) break;
+	    strcat (buffer, dir_entry->d_name);
+	}
+    printf("buffer %s\n", buffer);
+    closedir(dir);
+    }
+    return;
 }
 
 void *listenerFunc(void *args)
@@ -86,4 +114,5 @@ void *listenerFunc(void *args)
     {
     
     }
+    return NULL;
 }
