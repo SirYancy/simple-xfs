@@ -19,10 +19,10 @@ void InitServer(int port, void *(*handler)(void *))
     gSocket = socket(AF_INET , SOCK_STREAM , IPPROTO_TCP);
 
     if (gSocket == -1) {
-        printf("Could not create socket\n");
+        debug_print("Could not create socket");
         return;
     } else {
-        printf("Socket created with port %d\n", port);
+        debug_print("Socket created with port: " << port);
     }
 
     // Prepare the sockaddr_in structure
@@ -32,10 +32,10 @@ void InitServer(int port, void *(*handler)(void *))
 
     // Bind
     if (bind(gSocket, (struct sockaddr *)&gAddress, sizeof(gAddress)) < 0) {
-        printf("Bind failed\n");
+        debug_print("Bind failed");
         return;
     } else {
-        printf("Binding...\n");
+        debug_print("Binding...");
     }
 
     gHandler = handler;
@@ -48,7 +48,7 @@ int getPort()
 {
     socklen_t len = sizeof(gAddress);
     if(getsockname(gSocket, (struct sockaddr *)&gAddress, &len) == -1)
-        printf("Could not getsockname\n");
+        debug_print("Could not getsockname");
     else
         return ntohs(gAddress.sin_port);
 
@@ -61,7 +61,7 @@ void StartListening()
     struct sockaddr_in client;
 
     // Accept and incoming connection
-    printf("Waiting for incoming connections...\n");
+    debug_print("Waiting for incoming connections...");
 
     sockaddrSize = sizeof(struct sockaddr_in);
 
@@ -71,10 +71,10 @@ void StartListening()
         int *newSocket = (int *)malloc(sizeof(int));
         *newSocket = clientSocket;
 
-        printf("New client connected\n");
+        debug_print("New client connected");
 
         if(pthread_create(&clientThread, NULL, gHandler, (void *)newSocket) < 0) {
-            printf("Cannot create thread\n");
+            debug_print("Cannot create thread");
             return;
         }
     }
@@ -89,13 +89,13 @@ void *TrackingServerHandler(void *args) {
         buffer[recvSize] = '\0';
 
         // Handle requests from file server
-        printf("%s\n", buffer);
+        debug_print(buffer);
     }   
 
     if(recvSize == 0) {
-        printf("Client disconnected\n");
+        debug_print("Client disconnected");
     } else if(recvSize == -1) {
-        printf("Recv error\n");
+        debug_print("Recv error");
     }
 
     // Free args
@@ -116,13 +116,13 @@ void *FileServerHandler(void *args) {
         buffer[recvSize] = '\0';
 
         // Handle requests from file server
-        printf("%s\n", buffer);
+        debug_print(buffer);
     }   
 
     if(recvSize == 0) {
-        printf("Client disconnected\n");
+        debug_print("Client disconnected");
     } else if(recvSize == -1) {
-        printf("Recv error\n");
+        debug_print("Recv error");
     }
 
     // Free args
@@ -149,7 +149,7 @@ int ConnectToServer(char *serverIP, int serverPort) {
     // Create socket for connecting to server
     serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (serverSocket == -1) {
-        printf("Socket creation failed\n");
+        debug_print("Socket creation failed");
         return serverSocket;
     }
 
@@ -159,7 +159,7 @@ int ConnectToServer(char *serverIP, int serverPort) {
 
     // Connect to server
     if(connect(serverSocket, (struct sockaddr *)&server , sizeof(server)) < 0) {
-        printf("Connection failed\n");
+        debug_print("Connection failed");
         return serverSocket;
     }
 
@@ -180,39 +180,7 @@ void RecvACK(int socket) {
     RecvFromSocket(socket, buffer);
 
     if (strncmp("ACK", buffer, strlen("ACK") != 0)) {
-        printf("Error, expected ACK to be received: %s\n", buffer);
+        debug_print("Error, expected ACK to be received: " << buffer);
     }
 }
 
-void FindFile(char *IP, int port, char *buffer) {
-}
-
-void DownloadFile(char *IP, int port, char *buffer) {
-}
-
-void GetLoad(char *IP, int port, char *buffer) {
-    // Get the load from a specific file server
-    int serverSocket;
-    char buffer[MAX_LEN];
-
-    // Prepare server socket
-    serverSocket = ConnectToServer(IP, port);
-}
-
-void UpdateList(char *IP, int port) {
-    // Send the file list to tracking server
-    int serverSocket, len;
-    char buffer[MAX_LEN];
-
-    // Prepare server socket
-    serverSocket = ConnectToServer(IP, port);
-
-    // Prepare file list
-    len = GetFileList(buffer);
-
-    // Send buffer to tracking server
-    SendToSocket(serverSocket, buffer, len);
-
-    // Wait for ACK
-    RecvACK(serverSocket);
-}

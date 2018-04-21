@@ -1,5 +1,7 @@
+#include <iostream>
+
 #define DEBUG true
 
-#define debug_print(fmt, ...) \
-            do { if (DEBUG) printf("%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, __VA_ARGS__); } while (0)
-
+#define debug_print(var) do { \
+    if (DEBUG) { std::cout << "DBG: " << __FILE__ << "(" << __LINE__ << ") "\
+        << var << std::endl;}} while (0)
