@@ -10,9 +10,16 @@ int my_port = 0;
 int tracker_port = 0;
 char *tracker_ip;
 
+char filename[25];
+
 int live = 1;
 
+void register_client(int socket, char *buffer);
+void find(int socket, char *buffer);
+void download(int socket, char *buffer);
+void updateList(int socket, char *buffer);
 void readDirectory(char *buffer, char *folder);
+
 void *listenerFunc(void *args);
 void *clientFunc(void *args);
 
@@ -47,8 +54,10 @@ int main(int argc, char* argv[]) {
 
 void *clientFunc(void *args)
 {
-    int socket = ConnectToServer(tracker_ip, tracker_port);
+    int trackerSocket = ConnectToServer(tracker_ip, tracker_port);
     char buffer[MAX_LEN];
+
+    register_client(trackerSocket, buffer);
 
     int menu_choice;
 
@@ -56,34 +65,75 @@ void *clientFunc(void *args)
     {
         memset(buffer, '\0', MAX_LEN);
 
-        printf("Welcome, \n%s\n%s\n%s\n%s",
+        printf("Welcome, \n%s\n%s\n%s\n%s\n%s\n%s\n%s",
                 "What do you want to do?",
-                "1 - Exit",
-                "2 - Register",
+                "1 - Find",
+                "2 - Download",
+                "3 - GetLoad",
+                "4 - UpdateList",
+                "5 - Exit",
                 "> ");
         scanf("%d", &menu_choice);
 
         //flush input buffer
         int c;
         while ((c = getchar()) != '\n' && c != EOF) { }
+
         switch(menu_choice)
         {
             case 1:
+                find(trackerSocket, buffer);
+                break;
+            case 2: 
+                break;
+            case 6:
                 printf("Exiting\n");
                 live = 0;
                 break;
-            case 2: 
-                char folder[MAX_LEN];
-   		sprintf(folder, "./files");
-		readDirectory(buffer, folder);
-		SendToSocket(socket, buffer, strlen(buffer));
-		break;
             default:
                 printf("Invalid input\n");
                 break;
         }
     }
     return NULL;
+}
+
+void register_client(int socket, char *buffer)
+{
+    char folder[MAX_LEN];
+    sprintf(folder, "./files");
+    readDirectory(buffer, folder);
+    SendToSocket(socket, buffer, strlen(buffer));
+}
+
+void find(int socket, char *buffer)
+{
+    printf("\nFilename: ");
+    scanf("%[^\n]s", filename);
+
+    // flush input buffer
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
+
+    sprintf(buffer, "find;%s", filename);
+
+    SendToSocket(socket, buffer, strlen(buffer));
+
+    int len = RecvFromSocket(socket, buffer);
+    buffer[len] = '\0';
+
+    cout << "Servers with file: " << filename <<
+        endl << buffer << endl;
+}
+
+void download(int socket, char *buffer)
+{
+    //TODO
+}
+
+void updateList(int socket, char *buffer)
+{
+    //TODO
 }
 
 void readDirectory(char* buffer, char* folder) 
@@ -93,14 +143,14 @@ void readDirectory(char* buffer, char* folder)
     dir = opendir(folder);
     if (dir)
     {
-	while (true)
-	{ 
-	    dir_entry = readdir(dir);
-	    if (dir_entry ==  NULL) break;
-	    strcat (buffer, dir_entry->d_name);
-	}
-    printf("buffer %s\n", buffer);
-    closedir(dir);
+        while (true)
+        { 
+            dir_entry = readdir(dir);
+            if (dir_entry ==  NULL) break;
+            strcat (buffer, dir_entry->d_name);
+        }
+        printf("buffer %s\n", buffer);
+        closedir(dir);
     }
     return;
 }
@@ -112,7 +162,7 @@ void *listenerFunc(void *args)
     cout << "Waiting for connections on listener socket..." << endl;
     while(live)
     {
-    
+        //Do whatever we should do. I assume this will just block at the loop in StartListening()
     }
     return NULL;
 }

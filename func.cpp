@@ -2,7 +2,8 @@
 #include "file.h"
 #include "func.h"
 
-void FindFile(char *IP, int port, char *buffer) {
+char *FindFile(char *filename) {
+    //TODO Find filename. return list of servers with filename
 }
 
 void DownloadFile(char *IP, int port, char *buffer) {

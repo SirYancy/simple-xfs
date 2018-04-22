@@ -1,6 +1,7 @@
 #include "debug.h"
 #include "file.h"
 #include "tcp.h"
+#include "func.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <stdio.h>
@@ -100,6 +101,24 @@ void *TrackingServerHandler(void *args) {
 
         // Handle requests from file server
         printf("buffer %s\n", buffer);
+
+        char *command = strtok(buffer, ";");
+
+        if (strcmp(command, "find") == 0)
+        {
+            char *filename = strtok(NULL, ";");
+
+            strcpy(buffer, FindFile(filename));
+            
+            SendToSocket(socket, buffer, strlen(buffer));
+        }
+        else if(strcmp(command, "DownloadFile") == 0)
+        {
+            //TODO Not sure if we should implement this here or in the fileserver Handler
+        }else {
+            printf("Command not recognized\n");
+        }
+
     }
 
     if(recvSize == 0) {
