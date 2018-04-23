@@ -6,9 +6,11 @@
 
 using namespace std;
 
+int gServerSocket = 0;
 int my_port = 0;
 int tracker_port = 0;
 char *tracker_ip;
+char *machID;
 
 char filename[25];
 
@@ -27,15 +29,16 @@ int main(int argc, char* argv[]) {
 
     pthread_t listenThread, clientThread;
 
-    if(argc != 3)
+    if(argc != 4)
     {
-        cout << "Syntax is: ./tracker IP_ADDRESS PORT_NUM" << endl;
+        cout << "Syntax is: ./tracker IP_ADDRESS PORT_NUM FOLDER" << endl;
         return 1;
     }
 
     tracker_port = atoi(argv[2]);
     tracker_ip = argv[1];
-
+    machID = argv[3];
+    
     InitFileServer(0);
 
     my_port = getPort();
@@ -54,8 +57,9 @@ int main(int argc, char* argv[]) {
 
 void *clientFunc(void *args)
 {
-    int trackerSocket = ConnectToServer(tracker_ip, tracker_port);
+    int trackerSocket = ConnectToServer(tracker_ip, tracker_port, my_port);
     char buffer[MAX_LEN];
+    memset(buffer, '\0', MAX_LEN); 
 
     register_client(trackerSocket, buffer);
 
@@ -100,9 +104,13 @@ void *clientFunc(void *args)
 
 void register_client(int socket, char *buffer)
 {
+    printf("registering client...\n");
+    sprintf(buffer, "register;");
     char folder[MAX_LEN];
-    sprintf(folder, "./files");
+    sprintf(folder, machID);
     readDirectory(buffer, folder);
+    
+    printf("file list %s\n", buffer);
     SendToSocket(socket, buffer, strlen(buffer));
 }
 
@@ -147,7 +155,12 @@ void readDirectory(char* buffer, char* folder)
         { 
             dir_entry = readdir(dir);
             if (dir_entry ==  NULL) break;
+            else if (strcmp(dir_entry->d_name, ".") == 0 || strcmp(dir_entry->d_name, "..") == 0)
+	    { 
+		continue;
+	    } 
             strcat (buffer, dir_entry->d_name);
+	    strcat (buffer, ";");
         }
         printf("buffer %s\n", buffer);
         closedir(dir);

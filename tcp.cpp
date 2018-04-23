@@ -9,11 +9,13 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
+#include <map>
 
 struct sockaddr_in gAddress;
 int gSocket;
 void *(*gHandler)(void *);
 static int gMachID = 0;
+std::multimap<char*, char*> fileMap;
 
 int getID()
 {
@@ -95,6 +97,19 @@ void *TrackingServerHandler(void *args) {
     int socket = *((int *)args);
     int recvSize;
     char buffer[MAX_LEN];
+    
+    recvSize = recv(socket, buffer, MAX_LEN, 0);
+    
+    struct sockaddr_in addr;
+    socklen_t addr_size = sizeof(struct sockaddr_in);
+    int result = getpeername(socket, (struct sockaddr *)&addr, &addr_size);
+    
+    char socketInfo[MAX_LEN];
+    int port = atoi(buffer);
+    char *ip = inet_ntoa(addr.sin_addr);
+    sprintf(socketInfo, "%d %s", port, ip);
+
+    int commSocket = ConnectToServer(inet_ntoa(addr.sin_addr), atoi(buffer), 0);
 
     while((recvSize = recv(socket, buffer, MAX_LEN, 0)) > 0) {
         buffer[recvSize] = '\0';
@@ -115,7 +130,15 @@ void *TrackingServerHandler(void *args) {
         else if(strcmp(command, "DownloadFile") == 0)
         {
             //TODO Not sure if we should implement this here or in the fileserver Handler
-        }else {
+        } else if (strcmp(command, "register") == 0) {
+            command = strtok(NULL, ";");
+	    while(command != NULL) 
+	    {
+		printf("file %s\n", command);
+	        fileMap.insert(std::pair<char*, char*>(command, socketInfo));
+            	command = strtok(NULL, ";");
+	    }
+	} else {
             printf("Command not recognized\n");
         }
 
@@ -171,8 +194,8 @@ void InitFileServer(int port) {
     InitServer(port, FileServerHandler);
 }
 
-int ConnectToServer(char *serverIP, int serverPort) {
-    struct sockaddr_in server;
+int ConnectToServer(char *serverIP, int serverPort, int clientPort) {
+    struct sockaddr_in server; 
     int serverSocket;
 
     // Create socket for connecting to server
@@ -191,7 +214,9 @@ int ConnectToServer(char *serverIP, int serverPort) {
         printf("Connection failed\n");
         return serverSocket;
     }
-
+    char buf[MAX_LEN];
+    sprintf(buf, "%d", clientPort);
+    SendToSocket(serverSocket, buf, strlen(buf));
     return serverSocket;
 }
 

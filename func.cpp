@@ -1,8 +1,10 @@
 #include "tcp.h"
 #include "file.h"
 #include "func.h"
+#include "stdio.h"
 
 char *FindFile(char *filename) {
+    printf("trying to find file\n");
     //TODO Find filename. return list of servers with filename
 }
 
@@ -15,7 +17,7 @@ void GetLoad(char *IP, int port, char *buffer) {
     // char buffer[MAX_LEN];
 
     // Prepare server socket
-    serverSocket = ConnectToServer(IP, port);
+    serverSocket = ConnectToServer(IP, port, 0);
 }
 
 void UpdateList(char *IP, int port) {
@@ -24,7 +26,7 @@ void UpdateList(char *IP, int port) {
     char buffer[MAX_LEN];
 
     // Prepare server socket
-    serverSocket = ConnectToServer(IP, port);
+    serverSocket = ConnectToServer(IP, port, 0);
 
     // Prepare file list
     len = GetFileList(buffer);

@@ -1,5 +1,6 @@
 #define MAX_LEN 1024
 
+extern int gServerSocket;
 
 void InitTrackingServer(int port);
 void InitFileServer(int port);
@@ -8,7 +9,7 @@ void StartListening();
 
 int getPort();
 
-int ConnectToServer(char *serverIP, int serverPort);
+int ConnectToServer(char *serverIP, int serverPort, int clientPort);
 
 int SendToSocket(int socket, char *buffer, int len);
 int RecvFromSocket(int socket, char *buffer);
