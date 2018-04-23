@@ -1,3 +1,4 @@
+#include "Client.h"
 #include "debug.h"
 #include "file.h"
 #include "tcp.h"
@@ -8,6 +9,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
+#include <string>
 #include <unistd.h>
 #include <map>
 
@@ -15,12 +17,14 @@ struct sockaddr_in gAddress;
 int gSocket;
 void *(*gHandler)(void *);
 static int gMachID = 0;
+
+std::vector<Client*> gClientList;
+
 std::multimap<char*, char*> fileMap;
 
 int getID()
 {
     int id = ++gMachID;
-    printf("gMachID %d\n", id);
     return id;
 }
 
@@ -49,7 +53,7 @@ void InitServer(int port, void *(*handler)(void *))
         printf("Binding...\n");
     }
     int id = getID();
-    printf("id %d", id);
+    printf("id %d\n", id);
     gHandler = handler;
     // Listen
     listen(gSocket, 10);
@@ -97,20 +101,27 @@ void *TrackingServerHandler(void *args) {
     int socket = *((int *)args);
     int recvSize;
     char buffer[MAX_LEN];
-    
+
     recvSize = recv(socket, buffer, MAX_LEN, 0);
-    
+
     struct sockaddr_in addr;
     socklen_t addr_size = sizeof(struct sockaddr_in);
     int result = getpeername(socket, (struct sockaddr *)&addr, &addr_size);
-    
+
     char socketInfo[MAX_LEN];
+    int id = getID();
     int port = atoi(buffer);
     char *ip = inet_ntoa(addr.sin_addr);
-    sprintf(socketInfo, "%d %s", port, ip);
+    sprintf(socketInfo, "%d %s\n", port, ip);
+
+    std::string ipString(ip);
+
+    Client *c = new Client(id, port, ipString);
+    gClientList.push_back(c);
 
     int commSocket = ConnectToServer(inet_ntoa(addr.sin_addr), atoi(buffer), 0);
 
+    printf("Listening on new socket\n");
     while((recvSize = recv(socket, buffer, MAX_LEN, 0)) > 0) {
         buffer[recvSize] = '\0';
 
@@ -123,8 +134,8 @@ void *TrackingServerHandler(void *args) {
         {
             char *filename = strtok(NULL, ";");
 
-            strcpy(buffer, FindFile(filename));
-            
+            strcpy(buffer, FindFile(filename, &gClientList));
+
             SendToSocket(socket, buffer, strlen(buffer));
         }
         else if(strcmp(command, "DownloadFile") == 0)
@@ -132,13 +143,16 @@ void *TrackingServerHandler(void *args) {
             //TODO Not sure if we should implement this here or in the fileserver Handler
         } else if (strcmp(command, "register") == 0) {
             command = strtok(NULL, ";");
-	    while(command != NULL) 
-	    {
-		printf("file %s\n", command);
-	        fileMap.insert(std::pair<char*, char*>(command, socketInfo));
-            	command = strtok(NULL, ";");
-	    }
-	} else {
+            vector<string> fileList;
+            while(command != NULL) 
+            {
+                printf("file %s\n", command);
+                std::string fn(command);
+                fileList.push_back(fn);
+                command = strtok(NULL, ";");
+            }
+            c->updateFileList(fileList);
+        } else {
             printf("Command not recognized\n");
         }
 

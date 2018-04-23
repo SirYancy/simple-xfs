@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 
     InitTrackingServer(port);
 
-    cout << "Starting server on port" << port << endl;
+    cout << "Starting server on port " << port << endl;
     
     StartListening();
 

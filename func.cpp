@@ -1,14 +1,36 @@
+#include "Client.h"
 #include "tcp.h"
 #include "file.h"
 #include "func.h"
 #include "stdio.h"
+#include <string>
 
-char *FindFile(char *filename) {
+char *FindFile(char *filename, vector<Client*>* clients)
+{
     printf("trying to find file\n");
-    //TODO Find filename. return list of servers with filename
+    std::string fn(filename);
+    std::string serverList;
+
+    for (auto it = clients->begin(); it != clients->end(); ++it)
+    {
+        if((*it)->findFile(fn))
+        {
+            std::string ip = (*it)->getIP();
+            int port = (*it)->getPort();
+            serverList.append(ip);
+            serverList.append(";");
+            serverList.append(std::to_string(port));
+            serverList.append(";");
+        }
+    }
+
+    return const_cast<char*>(serverList.c_str());
+
 }
 
-void DownloadFile(char *IP, int port, char *buffer) {
+void DownloadFile(char *IP, int port, char *buffer)
+{
+
 }
 
 void GetLoad(char *IP, int port, char *buffer) {

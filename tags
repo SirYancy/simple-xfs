@@ -1,0 +1,51 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ConnectToServer	tcp.cpp	/^int ConnectToServer(char *serverIP, int serverPort, int clientPort) {$/;"	f
+DEBUG	debug.h	3;"	d
+DownloadFile	func.cpp	/^void DownloadFile(char *IP, int port, char *buffer) {$/;"	f
+FileServerHandler	tcp.cpp	/^void *FileServerHandler(void *args) {$/;"	f
+FindFile	func.cpp	/^char *FindFile(char *filename) {$/;"	f
+GetFileList	file.cpp	/^int GetFileList(char *buffer) {$/;"	f
+GetLoad	func.cpp	/^void GetLoad(char *IP, int port, char *buffer) {$/;"	f
+InitFileServer	tcp.cpp	/^void InitFileServer(int port) {$/;"	f
+InitServer	tcp.cpp	/^void InitServer(int port, void *(*handler)(void *))$/;"	f
+InitTrackingServer	tcp.cpp	/^void InitTrackingServer(int port) {$/;"	f
+MAX_LEN	tcp.h	1;"	d
+MyHash	hash.cpp	/^struct MyHash$/;"	s	file:
+RecvACK	tcp.cpp	/^void RecvACK(int socket) {$/;"	f
+RecvFromSocket	tcp.cpp	/^int RecvFromSocket(int socket, char *buffer) {$/;"	f
+SendToSocket	tcp.cpp	/^int SendToSocket(int socket, char *buffer, int len) {$/;"	f
+StartListening	tcp.cpp	/^void StartListening()$/;"	f
+TrackingServerHandler	tcp.cpp	/^void *TrackingServerHandler(void *args) {$/;"	f
+UpdateList	func.cpp	/^void UpdateList(char *IP, int port) {$/;"	f
+clientFunc	fileServer.cpp	/^void *clientFunc(void *args)$/;"	f
+debug_print	debug.h	6;"	d
+download	fileServer.cpp	/^void download(int socket, char *buffer)$/;"	f
+fileMap	tcp.cpp	/^std::multimap<char*, char*> fileMap;$/;"	v
+filename	fileServer.cpp	/^char filename[25];$/;"	v
+find	fileServer.cpp	/^void find(int socket, char *buffer)$/;"	f
+gAddress	tcp.cpp	/^struct sockaddr_in gAddress;$/;"	v	typeref:struct:sockaddr_in
+gHandler	tcp.cpp	/^void *(*gHandler)(void *);$/;"	v
+gMachID	tcp.cpp	/^static int gMachID = 0;$/;"	v	file:
+gServerSocket	fileServer.cpp	/^int gServerSocket = 0;$/;"	v
+gServerSocket	trackerServer.cpp	/^int gServerSocket = 0;$/;"	v
+gSocket	tcp.cpp	/^int gSocket;$/;"	v
+getID	tcp.cpp	/^int getID()$/;"	f
+getPort	tcp.cpp	/^int getPort()$/;"	f
+get_hash	hash.cpp	/^std::size_t get_hash(std::string fn)$/;"	f
+listenerFunc	fileServer.cpp	/^void *listenerFunc(void *args)$/;"	f
+live	fileServer.cpp	/^int live = 1;$/;"	v
+machID	fileServer.cpp	/^char *machID;$/;"	v
+main	fileServer.cpp	/^int main(int argc, char* argv[]) {$/;"	f
+main	trackerServer.cpp	/^int main(int argc, char* argv[]) {$/;"	f
+my_port	fileServer.cpp	/^int my_port = 0;$/;"	v
+operator ()	hash.cpp	/^    std::size_t operator()(std::string fn)$/;"	f	struct:MyHash
+readDirectory	fileServer.cpp	/^void readDirectory(char* buffer, char* folder) $/;"	f
+register_client	fileServer.cpp	/^void register_client(int socket, char *buffer)$/;"	f
+tracker_ip	fileServer.cpp	/^char *tracker_ip;$/;"	v
+tracker_port	fileServer.cpp	/^int tracker_port = 0;$/;"	v
+updateList	fileServer.cpp	/^void updateList(int socket, char *buffer)$/;"	f

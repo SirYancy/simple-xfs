@@ -89,8 +89,15 @@ void *clientFunc(void *args)
                 find(trackerSocket, buffer);
                 break;
             case 2: 
+                // TODO Download
                 break;
-            case 6:
+            case 3:
+                // TODO Get load
+                break;
+            case 4:
+                // TODO Upadte List
+                break;
+            case 5:
                 printf("Exiting\n");
                 live = 0;
                 break;

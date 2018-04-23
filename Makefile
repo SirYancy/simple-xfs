@@ -8,6 +8,9 @@ all: tracker client
 debug.o: debug.h
 	$(CXX) $(FLAGS) -c debug.h
 
+Client.o: Client.h Client.cpp
+	$(CXX) $(FLAGS) -c Client.cpp
+
 tcp.o: tcp.h tcp.cpp
 	$(CXX) $(FLAGS) -c tcp.cpp
 
@@ -28,11 +31,11 @@ trackerServer.o: trackerServer.cpp
 
 # Executables
 
-tracker: tcp.o file.o func.o hash.o debug.o trackerServer.o
-	$(CXX) $(FLAGS) -o tracker tcp.o file.o func.o trackerServer.o
+tracker: Client.o tcp.o file.o func.o hash.o debug.o trackerServer.o
+	$(CXX) $(FLAGS) -o tracker Client.o tcp.o file.o func.o trackerServer.o
 
-client: tcp.o file.o func.o hash.o debug.o fileServer.o
-	$(CXX) $(FLAGS) -o client tcp.o file.o func.o fileServer.o
+client: Client.o tcp.o file.o func.o hash.o debug.o fileServer.o
+	$(CXX) $(FLAGS) -o client Client.o tcp.o file.o func.o fileServer.o
 
 clean:
 	$(RM) core *.o tracker client
