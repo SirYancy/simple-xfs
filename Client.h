@@ -7,6 +7,10 @@
 using namespace std;
 
 class Client{
+
+    friend bool operator==(const Client &c1, const Client &c2);
+    friend bool operator!=(const Client &c1, const Client &c2);
+
     private:
         string id;
         int port;

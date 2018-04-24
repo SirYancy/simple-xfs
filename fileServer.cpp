@@ -67,6 +67,11 @@ void *clientFunc(void *args)
     char buffer[MAX_LEN];
     memset(buffer, '\0', MAX_LEN); 
 
+    // Wait for ACK from server
+    int len = RecvFromSocket(trackerSocket, buffer);
+    buffer[len] = '\0';
+    printf("From server: %s\n", buffer);
+
     register_client(trackerSocket, buffer);
 
     int menu_choice;
@@ -191,7 +196,8 @@ void download(int socket, char *buffer)
         id = strtok(NULL, ";");
     }
 
-    // TODO Get loads of servers to choose which server. For now, it's just going to download from the first one.
+    // TODO Get loads and latencies of servers to choose which server. 
+    // For now, it's just going to download from the first one.
 
     serverDesc s = servers[0]; // TODO replace this
     printf("Connecting to server %s:%d\n", s.ip, s.port);
@@ -232,9 +238,16 @@ void download(int socket, char *buffer)
     fclose(f);
 
     size_t my_checksum = get_hash(filedesc);
-    printf("Checksum: %d\n", my_checksum);
+    printf("Checksum: %d - %s\n", my_checksum, filedesc);
 
     close(dlSocket);
+
+    //Update File List on tracker
+    sprintf(buffer, "update;");
+    readDirectory(buffer, myID);
+
+    //SendToSocket(
+
 
 }
 

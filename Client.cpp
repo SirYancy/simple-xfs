@@ -49,3 +49,12 @@ void Client::updateFileList(vector<string> fl)
     fileList = fl;
 }
 
+bool operator==(const Client &c1, const Client &c2)
+{
+    return c1.getID() == c2.getID();
+}
+
+bool operator!=(const Client &c1, const Client &c2)
+{
+    return !(c1 == c2);
+}

@@ -5,6 +5,8 @@
 #include "func.h"
 #include "stdio.h"
 #include "hash.h"
+#include <iostream>
+#include <algorithm>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <stdio.h>
@@ -100,6 +102,8 @@ void *TrackingServerHandler(void *args) {
 
     printf("%s\n", buffer);
 
+    SendToSocket(socket, "ACK", strlen("ACK"));
+
     struct sockaddr_in addr;
     socklen_t addr_size = sizeof(struct sockaddr_in);
     int result = getpeername(socket, (struct sockaddr *)&addr, &addr_size);
@@ -137,12 +141,25 @@ void *TrackingServerHandler(void *args) {
             vector<string> fileList;
             while(filename != NULL) 
             {
-                printf("file %s\n", filename);
+                printf("file - %s\n", filename);
                 std::string fn(filename);
                 fileList.push_back(fn);
                 filename = strtok(NULL, ";");
             }
             c->setID(machid);
+            c->updateFileList(fileList);
+        } else if (strcmp(command, "update") == 0) {
+            printf("Updating file list for: %s\n", c->getID());
+
+            char *filename = strtok(NULL, ";");
+            vector<string> fileList;
+            while(filename != NULL) 
+            {
+                printf("file - %s\n", filename);
+                std::string fn(filename);
+                fileList.push_back(fn);
+                filename = strtok(NULL, ";");
+            }
             c->updateFileList(fileList);
         } else {
             printf("Command not recognized\n");
@@ -154,6 +171,14 @@ void *TrackingServerHandler(void *args) {
         printf("Client disconnected\n");
     } else if(recvSize == -1) {
         printf("Recv error\n");
+    }
+
+    cout << "Erasing: " << c->getID() << endl;
+    gClientList.erase(std::remove(gClientList.begin(), gClientList.end(), c), gClientList.end());
+
+    for(auto const cl : gClientList)
+    {
+        cout << "Client: " << cl->getID() << endl;
     }
 
     // Free args
