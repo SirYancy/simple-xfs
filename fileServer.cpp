@@ -13,10 +13,16 @@ using namespace std;
 
 int gServerSocket = 0;
 int my_port = 0;
+<<<<<<< HEAD
 int tracker_port = 0;
 char *tracker_ip;
 char *myID;
 int load = 0;
+=======
+//int tracker_port = 0;
+//char *tracker_ip;
+char *machID;
+>>>>>>> 0bd4ceac0976ceddbca99ab9b8487765ce73bbb2
 
 char filename[25];
 
