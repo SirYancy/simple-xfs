@@ -8,8 +8,8 @@ using namespace std;
 
 int gServerSocket = 0;
 int my_port = 0;
-int tracker_port = 0;
-char *tracker_ip;
+//int tracker_port = 0;
+//char *tracker_ip;
 char *machID;
 
 char filename[25];

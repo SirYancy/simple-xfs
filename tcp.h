@@ -1,6 +1,8 @@
 #define MAX_LEN 1024
 
 extern int gServerSocket;
+extern int tracker_port; 
+extern char *tracker_ip;
 
 void InitTrackingServer(int port);
 void InitFileServer(int port);

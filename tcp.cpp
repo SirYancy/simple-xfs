@@ -17,6 +17,8 @@ struct sockaddr_in gAddress;
 int gSocket;
 void *(*gHandler)(void *);
 static int gMachID = 0;
+int tracker_port = 0;
+char *tracker_ip;
 
 std::vector<Client*> gClientList;
 
@@ -178,18 +180,26 @@ void *FileServerHandler(void *args) {
     int socket = *((int *)args);
     int recvSize;
     char buffer[MAX_LEN];
+    while (1) {
+        while((recvSize = recv(socket, buffer, MAX_LEN, 0)) > 0) {
+            buffer[recvSize] = '\0';
 
-    while((recvSize = recv(socket, buffer, MAX_LEN, 0)) > 0) {
-        buffer[recvSize] = '\0';
+            // Handle requests from file server
+            printf("buffer %s \n", buffer);
+        }
 
-        // Handle requests from file server
-        printf("buffer %s \n", buffer);
-    }
-
-    if(recvSize == 0) {
-        printf("Client disconnected\n");
-    } else if(recvSize == -1) {
-        printf("Recv error\n");
+        if(recvSize == 0) {
+            printf("Client disconnected\n");
+/*	    int my_port = getPort();
+	    // reconnect in a loop with timeout
+	    while (ConnectToServer(tracker_ip, tracker_port, my_port) < 0)
+	    {
+	        // if tracking server disconnected, timeout for 0.5 seconds
+	        usleep(5000000);
+	    } */
+        } else if(recvSize == -1) {
+            printf("Recv error\n");
+        }
     }
 
     // Free args
