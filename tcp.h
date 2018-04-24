@@ -1,11 +1,13 @@
-#define MAX_LEN 1024
+#ifndef TCP_H
+#define TCP_H
 
 extern int gServerSocket;
 extern int tracker_port; 
 extern char *tracker_ip;
+#define MAX_LEN 1024
 
 void InitTrackingServer(int port);
-void InitFileServer(int port);
+void InitFileServer(char* id, int port);
 
 void StartListening();
 
@@ -22,3 +24,5 @@ void FindFile(char *IP, int port, char *buffer);
 void DownloadFile(char *IP, int port, char *buffer);
 void GetLoad(char *IP, int port, char *buffer);
 void UpdateList(char *IP, int port);
+
+#endif //TCP_H

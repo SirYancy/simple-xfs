@@ -3,23 +3,25 @@
 #include <string>
 #include "hash.h"
 
+using namespace std;
+
 struct MyHash
 {
-    std::size_t operator()(std::string fn)
+    size_t operator()(string fn)
     {
-        std::string line;
-        std::ifstream fp(fn);
+        string line;
+        ifstream fp(fn);
 
-        std::size_t h = 1;
-        while(std::getline(fp, line)) {
-            std::size_t h1 = std::hash<std::string>{}(line);
+        size_t h = 1;
+        while(getline(fp, line)) {
+            size_t h1 = hash<string>{}(line);
             h = h ^ (h1 << 1); // Combine with next char
         }
         return h;
     }
 };
 
-std::size_t get_hash(std::string fn)
+size_t get_hash(string fn)
 {
     return MyHash{}(fn);
 }

@@ -17,9 +17,12 @@ void FindFile(char *filename, vector<Client*>* clients, char *buffer)
     {
         if((*it)->findFile(fn))
         {
+            std::string id = (*it)->getID();
             std::string ip = (*it)->getIP();
             int port = (*it)->getPort();
             std::cout << "Found File at " << ip << ":" << port << std::endl;
+            serverList.append(id);
+            serverList.append(";");
             serverList.append(ip);
             serverList.append(";");
             serverList.append(std::to_string(port));
@@ -28,7 +31,6 @@ void FindFile(char *filename, vector<Client*>* clients, char *buffer)
     }
 
     strcpy(buffer, serverList.c_str());
-
 }
 
 void DownloadFile(char *IP, int port, char *buffer)
