@@ -1,8 +1,13 @@
 #include <iostream>
 #include <pthread.h>
 #include <string.h>
-#include "tcp.h"
 #include <dirent.h>
+#include <vector>
+#include <stdio.h>
+#include <unistd.h>
+
+#include "hash.h"
+#include "tcp.h"
 
 using namespace std;
 
@@ -10,7 +15,8 @@ int gServerSocket = 0;
 int my_port = 0;
 int tracker_port = 0;
 char *tracker_ip;
-char *machID;
+char *myID;
+int load = 0;
 
 char filename[25];
 
@@ -37,9 +43,9 @@ int main(int argc, char* argv[]) {
 
     tracker_port = atoi(argv[2]);
     tracker_ip = argv[1];
-    machID = argv[3];
-    
-    InitFileServer(0);
+    myID= argv[3];
+
+    InitFileServer(myID, 0);
 
     my_port = getPort();
 
@@ -89,7 +95,7 @@ void *clientFunc(void *args)
                 find(trackerSocket, buffer);
                 break;
             case 2: 
-                // TODO Download
+                download(trackerSocket, buffer);
                 break;
             case 3:
                 // TODO Get load
@@ -112,12 +118,11 @@ void *clientFunc(void *args)
 void register_client(int socket, char *buffer)
 {
     printf("registering client...\n");
-    sprintf(buffer, "register;");
-    char folder[MAX_LEN];
-    strcpy(folder, machID);
+    sprintf(buffer, "register;%s;", myID);
+    char folder[20];
+    strcpy(folder, myID);
     readDirectory(buffer, folder);
-    
-    printf("file list %s\n", buffer);
+
     SendToSocket(socket, buffer, strlen(buffer));
 }
 
@@ -141,9 +146,96 @@ void find(int socket, char *buffer)
         endl << buffer << endl;
 }
 
+struct serverDesc {
+    char machid[20];
+    char ip[20];
+    int port;
+};
+
+void printserver(serverDesc s)
+{
+    cout << s.machid << " " << s.ip << " " << s.port << endl;
+}
+
 void download(int socket, char *buffer)
 {
-    //TODO
+    printf("\nFilename: ");
+    scanf("%[^\n]s", filename);
+
+    // flush input buffer
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
+
+    sprintf(buffer, "find;%s", filename);
+
+    SendToSocket(socket, buffer, strlen(buffer));
+
+    int len = RecvFromSocket(socket, buffer);
+    buffer[len] = '\0';
+
+    vector<serverDesc> servers;
+
+    char *id = strtok(buffer, ";");
+    while(id != NULL)
+    {
+        char *ip = strtok(NULL, ";");
+        int port = atoi(strtok(NULL, ";"));
+
+        serverDesc s;
+        strcpy(s.machid, id);
+        strcpy(s.ip, ip);
+        s.port = port;
+
+        servers.push_back(s);
+
+        id = strtok(NULL, ";");
+    }
+
+    // TODO Get loads of servers to choose which server. For now, it's just going to download from the first one.
+
+    serverDesc s = servers[0]; // TODO replace this
+    printf("Connecting to server %s:%d\n", s.ip, s.port);
+    int dlSocket = ConnectToServer(s.ip, s.port, my_port);
+
+    len = RecvFromSocket(dlSocket, buffer);
+    buffer[len] = '\0';
+    printf("%s\n", buffer);
+
+    memset(buffer, '\0', MAX_LEN); 
+    sprintf(buffer, "download;%s;", filename);
+    SendToSocket(dlSocket, buffer, strlen(buffer));
+
+    len = RecvFromSocket(dlSocket, buffer);
+    buffer[len] = '\0';
+
+    char *checksum = strtok(buffer, ";");
+    printf("Checksum: %s\n", checksum);
+
+    char filedesc[MAX_LEN];
+    sprintf(filedesc, "%s/%s", myID, filename);
+    FILE *f;
+    f = fopen(filedesc, "a");
+
+    while(buffer != NULL)
+    {
+        sprintf(buffer, "%s", "next");
+        SendToSocket(dlSocket, buffer, strlen(buffer));
+        len = RecvFromSocket(dlSocket, buffer);
+        buffer[len] = '\0';
+        if(strcmp(buffer, "end") == 0)
+        {
+            break;
+        }
+        fprintf(f, buffer);
+    }
+
+    fclose(f);
+
+    size_t my_checksum = get_hash(filedesc);
+    printf("Checksum: %d\n", my_checksum);
+
+    close(dlSocket);
+
 }
 
 void updateList(int socket, char *buffer)
@@ -163,13 +255,12 @@ void readDirectory(char* buffer, char* folder)
             dir_entry = readdir(dir);
             if (dir_entry ==  NULL) break;
             else if (strcmp(dir_entry->d_name, ".") == 0 || strcmp(dir_entry->d_name, "..") == 0)
-	    { 
-		continue;
-	    } 
+            { 
+                continue;
+            } 
             strcat (buffer, dir_entry->d_name);
-	    strcat (buffer, ";");
+            strcat (buffer, ";");
         }
-        printf("buffer %s\n", buffer);
         closedir(dir);
     }
     return;

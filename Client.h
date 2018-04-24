@@ -8,15 +8,16 @@ using namespace std;
 
 class Client{
     private:
-        int id;
+        string id;
         int port;
         string ip;
 
         vector<string> fileList;
 
     public:
-        Client(const int, const int, const string);
-        int getID() const;
+        Client(const int, const string);
+        string getID() const;
+        void setID(const string);
         int getPort() const;
         string getIP() const;
 

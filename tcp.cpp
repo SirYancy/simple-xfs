@@ -3,6 +3,8 @@
 #include "file.h"
 #include "tcp.h"
 #include "func.h"
+#include "stdio.h"
+#include "hash.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <stdio.h>
@@ -15,23 +17,17 @@
 
 struct sockaddr_in gAddress;
 int gSocket;
+char *machID;
 void *(*gHandler)(void *);
-static int gMachID = 0;
 
 std::vector<Client*> gClientList;
 
 std::multimap<char*, char*> fileMap;
 
-int getID()
-{
-    int id = ++gMachID;
-    return id;
-}
-
 void InitServer(int port, void *(*handler)(void *))
 {
     // Create socket
-    gSocket = socket(AF_INET , SOCK_STREAM , IPPROTO_TCP);
+    gSocket = socket(AF_INET, SOCK_STREAM , IPPROTO_TCP);
 
     if (gSocket == -1) {
         printf("Could not create socket\n");
@@ -52,8 +48,6 @@ void InitServer(int port, void *(*handler)(void *))
     } else {
         printf("Binding...\n");
     }
-    int id = getID();
-    printf("id %d\n", id);
     gHandler = handler;
     // Listen
     listen(gSocket, 10);
@@ -104,22 +98,19 @@ void *TrackingServerHandler(void *args) {
 
     recvSize = recv(socket, buffer, MAX_LEN, 0);
 
+    printf("%s\n", buffer);
+
     struct sockaddr_in addr;
     socklen_t addr_size = sizeof(struct sockaddr_in);
     int result = getpeername(socket, (struct sockaddr *)&addr, &addr_size);
 
-    char socketInfo[MAX_LEN];
-    int id = getID();
     int port = atoi(buffer);
     char *ip = inet_ntoa(addr.sin_addr);
-    sprintf(socketInfo, "%d %s\n", port, ip);
 
     std::string ipString(ip);
 
-    Client *c = new Client(id, port, ipString);
+    Client *c = new Client(port, ipString);
     gClientList.push_back(c);
-
-    int commSocket = ConnectToServer(inet_ntoa(addr.sin_addr), atoi(buffer), 0);
 
     printf("Listening on new socket\n");
     while((recvSize = recv(socket, buffer, MAX_LEN, 0)) > 0) {
@@ -135,23 +126,23 @@ void *TrackingServerHandler(void *args) {
             char *filename = strtok(NULL, ";");
 
             FindFile(filename, &gClientList, buffer);
-            printf("%s\n", buffer);
 
             SendToSocket(socket, buffer, strlen(buffer));
-        }
-        else if(strcmp(command, "DownloadFile") == 0)
-        {
-            //TODO Not sure if we should implement this here or in the fileserver Handler
         } else if (strcmp(command, "register") == 0) {
-            command = strtok(NULL, ";");
+            char *machid = strtok(NULL, ";");
+            
+            printf("registering: %s\n", machid);
+
+            char *filename = strtok(NULL, ";");
             vector<string> fileList;
-            while(command != NULL) 
+            while(filename != NULL) 
             {
-                printf("file %s\n", command);
-                std::string fn(command);
+                printf("file %s\n", filename);
+                std::string fn(filename);
                 fileList.push_back(fn);
-                command = strtok(NULL, ";");
+                filename = strtok(NULL, ";");
             }
+            c->setID(machid);
             c->updateFileList(fileList);
         } else {
             printf("Command not recognized\n");
@@ -179,11 +170,73 @@ void *FileServerHandler(void *args) {
     int recvSize;
     char buffer[MAX_LEN];
 
+    recvSize = recv(socket, buffer, MAX_LEN, 0);
+    SendToSocket(socket, "ACK", strlen("ACK"));
+
+    printf("%s\n", buffer);
+
     while((recvSize = recv(socket, buffer, MAX_LEN, 0)) > 0) {
         buffer[recvSize] = '\0';
-
+        //
         // Handle requests from file server
-        printf("buffer %s \n", buffer);
+        printf("buffer: %s \n", buffer);
+
+        char *command = strtok(buffer, ";");
+
+        if (strcmp(command, "download") == 0)
+        {
+            char *filename = strtok(NULL, ";");
+
+            std::string fn = "";
+
+            fn.append(machID);
+            fn.append("/");
+            fn.append(filename);
+
+            size_t checksum = get_hash(fn);
+
+            snprintf(buffer, sizeof(buffer), "%zu", checksum);
+
+            SendToSocket(socket, buffer, strlen(buffer));
+
+
+            FILE *fp;
+            ssize_t read;
+            char *line = NULL;
+            size_t len = 0;
+            fp = fopen(fn.c_str(), "r");
+
+
+            recvSize = RecvFromSocket(socket, buffer);
+            buffer[recvSize] = '\0';
+
+            char *msg = strtok(buffer, ";");
+
+            while(strcmp(msg, "next") == 0)
+            {
+                read = getline(&line, &len, fp);
+                if(read < 0)
+                {
+                    sprintf(buffer, "%s", "end");
+                    SendToSocket(socket, buffer, strlen(buffer));
+                    break;
+                }
+                SendToSocket(socket, line, strlen(line));
+                recvSize = RecvFromSocket(socket, buffer);
+                buffer[recvSize] = '\0';
+                msg = strtok(buffer, ";");
+            }
+
+            fclose(fp);
+
+        } 
+        else 
+        {
+            printf("Command not recognized\n");
+        }
+
+
+
     }
 
     if(recvSize == 0) {
@@ -205,11 +258,14 @@ void InitTrackingServer(int port) {
     InitServer(port, TrackingServerHandler);
 }
 
-void InitFileServer(int port) {
+void InitFileServer(char *id, int port)
+{
+    machID = id;
     InitServer(port, FileServerHandler);
 }
 
-int ConnectToServer(char *serverIP, int serverPort, int clientPort) {
+int ConnectToServer(char *serverIP, int serverPort, int clientPort)
+{
     struct sockaddr_in server; 
     int serverSocket;
 

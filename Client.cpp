@@ -6,13 +6,18 @@
 
 using namespace std;
 
-Client::Client(const int machid, const int p, const string ip)
-    :id(machid), port(p), ip(ip)
+Client::Client(const int p, const string ip)
+    :port(p), ip(ip)
 {}
 
-int Client::getID() const
+string Client::getID() const
 {
     return id;
+}
+
+void Client::setID(const string machid)
+{
+    id = machid;
 }
 
 int Client::getPort() const
