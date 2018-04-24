@@ -10,7 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <map>
-
+using namespace std;
 struct sockaddr_in gAddress;
 int gSocket;
 void *(*gHandler)(void *);
@@ -97,9 +97,12 @@ void *TrackingServerHandler(void *args) {
     int socket = *((int *)args);
     int recvSize;
     char buffer[MAX_LEN];
-    
+    char nm[MAX_LEN-1];    
     recvSize = recv(socket, buffer, MAX_LEN, 0);
-    
+    char* command;
+    char* name;
+    char file[MAX_LEN];
+
     struct sockaddr_in addr;
     socklen_t addr_size = sizeof(struct sockaddr_in);
     int result = getpeername(socket, (struct sockaddr *)&addr, &addr_size);
@@ -113,30 +116,39 @@ void *TrackingServerHandler(void *args) {
 
     while((recvSize = recv(socket, buffer, MAX_LEN, 0)) > 0) {
         buffer[recvSize] = '\0';
-
+        strncpy(nm, buffer, recvSize);
+	
+	nm[recvSize] = '\0';
         // Handle requests from file server
-        printf("buffer %s\n", buffer);
 
-        char *command = strtok(buffer, ";");
-
+        command = strtok(buffer, ";");
+        printf("nm name %s %s\n", nm, name);
         if (strcmp(command, "find") == 0)
         {
-            char *filename = strtok(NULL, ";");
-
-            strcpy(buffer, FindFile(filename));
+            char *filename = strtok(buffer, ";");
+	    printf("filename %s\n", filename);
+            for (std::multimap<char*, char*>::iterator iter=fileMap.begin(); iter!=fileMap.end(); ++iter) {
+                printf("%s => %s\n", (*iter).first, (*iter).second);
+            } 
             
-            SendToSocket(socket, buffer, strlen(buffer));
+         //   SendToSocket(socket, buffer, strlen(buffer));
         }
         else if(strcmp(command, "DownloadFile") == 0)
         {
             //TODO Not sure if we should implement this here or in the fileserver Handler
         } else if (strcmp(command, "register") == 0) {
-            command = strtok(NULL, ";");
-	    while(command != NULL) 
+//	    nm[recvSize] = '\0';
+	    name = strtok(nm, ";");
+	    name = strtok(NULL, ";");
+	    printf("buffer is %s, nm is now %s\n",buffer,  nm);
+	    char file[MAX_LEN];
+	    
+	    while(name != NULL) // || strcmp(name, " ") != 0) 
 	    {
-		printf("file %s\n", command);
-	        fileMap.insert(std::pair<char*, char*>(command, socketInfo));
-            	command = strtok(NULL, ";");
+		printf("file %s\n", name);
+	        strncpy(file, name, strlen(name));
+		fileMap.insert(std::pair<char*, char*>(file, socketInfo));
+            	name = strtok(NULL, ";");
 	    }
 	} else {
             printf("Command not recognized\n");
