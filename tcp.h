@@ -1,13 +1,7 @@
 #ifndef TCP_H
 #define TCP_H
 
-<<<<<<< HEAD
 #define MAX_LEN 1024
-=======
-extern int gServerSocket;
-extern int tracker_port; 
-extern char *tracker_ip;
->>>>>>> 0bd4ceac0976ceddbca99ab9b8487765ce73bbb2
 
 void InitTrackingServer(int port);
 void InitFileServer(char* id, int port);

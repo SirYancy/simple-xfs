@@ -13,16 +13,10 @@ using namespace std;
 
 int gServerSocket = 0;
 int my_port = 0;
-<<<<<<< HEAD
-int tracker_port = 0;
-char *tracker_ip;
 char *myID;
 int load = 0;
-=======
-//int tracker_port = 0;
-//char *tracker_ip;
-char *machID;
->>>>>>> 0bd4ceac0976ceddbca99ab9b8487765ce73bbb2
+char *t_ip = NULL;
+int t_port;
 
 char filename[25];
 
@@ -47,8 +41,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    tracker_port = atoi(argv[2]);
-    tracker_ip = argv[1];
+    t_port = atoi(argv[2]);
+    t_ip = argv[1];
     myID= argv[3];
 
     InitFileServer(myID, 0);
@@ -69,7 +63,7 @@ int main(int argc, char* argv[]) {
 
 void *clientFunc(void *args)
 {
-    int trackerSocket = ConnectToServer(tracker_ip, tracker_port, my_port);
+    int trackerSocket = ConnectToServer(t_ip, t_port, my_port);
     char buffer[MAX_LEN];
     memset(buffer, '\0', MAX_LEN); 
 
