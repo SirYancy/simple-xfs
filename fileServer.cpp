@@ -237,6 +237,7 @@ void download(int socket, char *buffer)
 
     fclose(f);
 
+    size_t checksum = get_hash(fn);
     size_t my_checksum = get_hash(filedesc);
     printf("Checksum: %d - %s\n", my_checksum, filedesc);
 

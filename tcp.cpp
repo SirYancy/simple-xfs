@@ -173,13 +173,9 @@ void *TrackingServerHandler(void *args) {
         printf("Recv error\n");
     }
 
+    // Removing this client from the list
     cout << "Erasing: " << c->getID() << endl;
     gClientList.erase(std::remove(gClientList.begin(), gClientList.end(), c), gClientList.end());
-
-    for(auto const cl : gClientList)
-    {
-        cout << "Client: " << cl->getID() << endl;
-    }
 
     // Free args
     free(args);
@@ -253,15 +249,11 @@ void *FileServerHandler(void *args) {
             }
 
             fclose(fp);
-
         } 
         else 
         {
             printf("Command not recognized\n");
         }
-
-
-
     }
 
     if(recvSize == 0) {
