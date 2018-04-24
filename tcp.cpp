@@ -5,6 +5,7 @@
 #include "func.h"
 #include "stdio.h"
 #include "hash.h"
+#include <time.h>
 #include <iostream>
 #include <algorithm>
 #include <arpa/inet.h>
@@ -91,7 +92,8 @@ void StartListening()
     }
 }
 
-void *TrackingServerHandler(void *args) {
+void *TrackingServerHandler(void *args) 
+{
     // handles messages from the client
     printf("tracking server handler called \n");
     int socket = *((int *)args);
@@ -186,10 +188,13 @@ void *TrackingServerHandler(void *args) {
     return NULL;
 }
 
-void *FileServerHandler(void *args) {
+void *FileServerHandler(void *args) 
+{
     int socket = *((int *)args);
     int recvSize;
     char buffer[MAX_LEN];
+    
+    srand(time(NULL));
 
     recvSize = recv(socket, buffer, MAX_LEN, 0);
     SendToSocket(socket, "ACK", strlen("ACK"));
@@ -220,13 +225,11 @@ void *FileServerHandler(void *args) {
 
             SendToSocket(socket, buffer, strlen(buffer));
 
-
             FILE *fp;
             ssize_t read;
             char *line = NULL;
             size_t len = 0;
             fp = fopen(fn.c_str(), "r");
-
 
             recvSize = RecvFromSocket(socket, buffer);
             buffer[recvSize] = '\0';
@@ -242,6 +245,19 @@ void *FileServerHandler(void *args) {
                     SendToSocket(socket, buffer, strlen(buffer));
                     break;
                 }
+
+                // Introduce random errors for checksum testing 
+                // 1% error on any line at some randome byte
+                int r = rand() % 100;
+
+                if(r == 0)
+                {
+                    printf("corrupting data\n");
+                    int rc = rand() % len;
+                    line[rc]++;
+                }
+
+                // Send this line of the file to the receiver
                 SendToSocket(socket, line, strlen(line));
                 recvSize = RecvFromSocket(socket, buffer);
                 buffer[recvSize] = '\0';
@@ -271,7 +287,8 @@ void *FileServerHandler(void *args) {
     return NULL;
 }
 
-void InitTrackingServer(int port) {
+void InitTrackingServer(int port) 
+{
     InitServer(port, TrackingServerHandler);
 }
 
