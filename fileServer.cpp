@@ -217,10 +217,16 @@ void download(int socket, char *buffer)
     char *checksum = strtok(buffer, ";");
     printf("Checksum: %s\n", checksum);
 
-    char filedesc[MAX_LEN];
-    sprintf(filedesc, "%s/%s", myID, filename);
-    FILE *f;
-    f = fopen(filedesc, "a");
+    string fn = "";
+
+    fn.append(myID);
+    fn.append("/");
+    fn.append(filename);
+
+    FILE *fp;
+
+    remove(fn.c_str());
+    fp = fopen(fn.c_str(), "a");
 
     while(buffer != NULL)
     {
@@ -232,14 +238,13 @@ void download(int socket, char *buffer)
         {
             break;
         }
-        fprintf(f, buffer);
+        fprintf(fp, buffer);
     }
 
-    fclose(f);
+    fclose(fp);
 
-    size_t checksum = get_hash(fn);
-    size_t my_checksum = get_hash(filedesc);
-    printf("Checksum: %d - %s\n", my_checksum, filedesc);
+    size_t my_checksum = get_hash(fn);
+    cout << "Checksum: " << my_checksum << " - " << fn << endl;
 
     close(dlSocket);
 
@@ -287,7 +292,7 @@ void *listenerFunc(void *args)
     cout << "Waiting for connections on listener socket..." << endl;
     while(live)
     {
-        //Do whatever we should do. I assume this will just block at the loop in StartListening()
+        // This blocks in the StartListening() function anyway.
     }
     return NULL;
 }
