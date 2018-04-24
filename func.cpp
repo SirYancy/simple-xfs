@@ -3,9 +3,11 @@
 #include "file.h"
 #include "func.h"
 #include "stdio.h"
+#include "string.h"
+#include <iostream>
 #include <string>
 
-char *FindFile(char *filename, vector<Client*>* clients)
+void FindFile(char *filename, vector<Client*>* clients, char *buffer)
 {
     printf("trying to find file\n");
     std::string fn(filename);
@@ -17,6 +19,7 @@ char *FindFile(char *filename, vector<Client*>* clients)
         {
             std::string ip = (*it)->getIP();
             int port = (*it)->getPort();
+            std::cout << "Found File at " << ip << ":" << port << std::endl;
             serverList.append(ip);
             serverList.append(";");
             serverList.append(std::to_string(port));
@@ -24,7 +27,7 @@ char *FindFile(char *filename, vector<Client*>* clients)
         }
     }
 
-    return const_cast<char*>(serverList.c_str());
+    strcpy(buffer, serverList.c_str());
 
 }
 

@@ -114,7 +114,7 @@ void register_client(int socket, char *buffer)
     printf("registering client...\n");
     sprintf(buffer, "register;");
     char folder[MAX_LEN];
-    sprintf(folder, machID);
+    strcpy(folder, machID);
     readDirectory(buffer, folder);
     
     printf("file list %s\n", buffer);

@@ -134,7 +134,8 @@ void *TrackingServerHandler(void *args) {
         {
             char *filename = strtok(NULL, ";");
 
-            strcpy(buffer, FindFile(filename, &gClientList));
+            FindFile(filename, &gClientList, buffer);
+            printf("%s\n", buffer);
 
             SendToSocket(socket, buffer, strlen(buffer));
         }
