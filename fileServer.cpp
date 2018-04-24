@@ -64,6 +64,7 @@ int main(int argc, char* argv[]) {
 void *clientFunc(void *args)
 {
     int trackerSocket = ConnectToServer(tracker_ip, tracker_port, my_port);
+    gServerSocket = trackerSocket;
     char buffer[MAX_LEN];
     memset(buffer, '\0', MAX_LEN); 
 
@@ -214,8 +215,9 @@ void download(int socket, char *buffer)
     len = RecvFromSocket(dlSocket, buffer);
     buffer[len] = '\0';
 
-    char *checksum = strtok(buffer, ";");
-    printf("Checksum: %s\n", checksum);
+    char *check = strtok(buffer, ";");
+    char check_r[strlen(check)];
+    strcpy(check_r, check);
 
     string fn = "";
 
@@ -223,37 +225,63 @@ void download(int socket, char *buffer)
     fn.append("/");
     fn.append(filename);
 
-    FILE *fp;
+    bool integrity = false;
 
-    remove(fn.c_str());
-    fp = fopen(fn.c_str(), "a");
+    while(!integrity){
+        FILE *fp;
+        remove(fn.c_str());
+        fp = fopen(fn.c_str(), "a");
 
-    while(buffer != NULL)
-    {
-        sprintf(buffer, "%s", "next");
-        SendToSocket(dlSocket, buffer, strlen(buffer));
+        while(buffer != NULL)
+        {
+            sprintf(buffer, "%s", "next");
+            SendToSocket(dlSocket, buffer, strlen(buffer));
+            len = RecvFromSocket(dlSocket, buffer);
+            buffer[len] = '\0';
+            if(strcmp(buffer, "end") == 0)
+            {
+                break;
+            }
+            fprintf(fp, buffer);
+        }
+
+        fclose(fp);
+
+        size_t check_n = get_hash(fn);
+
+        char check_l[strlen(check_r)+1];
+        snprintf(check_l, sizeof(check_l), "%zu", check_n);
+
+        cout << "Remote Checksum: " << check_r << endl
+            <<  "Local  Checksum: " << check_l << endl;
+
+        char cmd[10];
+        if(strcmp(check_r, check_l) == 0)
+        {
+            cout << "Checksum Succeeded!" << endl;
+            integrity = true;
+            sprintf(cmd, "%s", "done");
+        }
+        else
+        {
+            cout << "Checksum failed!" << endl;
+            sprintf(cmd, "%s", "restart");
+        }
+
+        // Inform DL Server of success/failure of checksum
+        SendToSocket(dlSocket, cmd, strlen(cmd));
         len = RecvFromSocket(dlSocket, buffer);
         buffer[len] = '\0';
-        if(strcmp(buffer, "end") == 0)
-        {
-            break;
-        }
-        fprintf(fp, buffer);
+        printf("Acknowledged: %s\n", buffer);
+
     }
-
-    fclose(fp);
-
-    size_t my_checksum = get_hash(fn);
-    cout << "Checksum: " << my_checksum << " - " << fn << endl;
 
     close(dlSocket);
 
     //Update File List on tracker
     sprintf(buffer, "update;");
     readDirectory(buffer, myID);
-
-    //SendToSocket(
-
+    SendToSocket(gServerSocket, buffer, strlen(buffer));
 
 }
 

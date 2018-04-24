@@ -136,7 +136,7 @@ void *TrackingServerHandler(void *args)
             SendToSocket(socket, buffer, strlen(buffer));
         } else if (strcmp(command, "register") == 0) {
             char *machid = strtok(NULL, ";");
-            
+
             printf("registering: %s\n", machid);
 
             char *filename = strtok(NULL, ";");
@@ -193,11 +193,12 @@ void *FileServerHandler(void *args)
     int socket = *((int *)args);
     int recvSize;
     char buffer[MAX_LEN];
-    
+    char *ack = "ACK";
+
     srand(time(NULL));
 
     recvSize = recv(socket, buffer, MAX_LEN, 0);
-    SendToSocket(socket, "ACK", strlen("ACK"));
+    SendToSocket(socket, ack, strlen(ack));
 
     printf("%s\n", buffer);
 
@@ -225,46 +226,68 @@ void *FileServerHandler(void *args)
 
             SendToSocket(socket, buffer, strlen(buffer));
 
-            FILE *fp;
-            ssize_t read;
-            char *line = NULL;
-            size_t len = 0;
-            fp = fopen(fn.c_str(), "r");
-
-            recvSize = RecvFromSocket(socket, buffer);
-            buffer[recvSize] = '\0';
-
-            char *msg = strtok(buffer, ";");
-
-            while(strcmp(msg, "next") == 0)
+            bool success = false;
+            while(!success)
             {
-                read = getline(&line, &len, fp);
-                if(read < 0)
-                {
-                    sprintf(buffer, "%s", "end");
-                    SendToSocket(socket, buffer, strlen(buffer));
-                    break;
-                }
+                FILE *fp;
+                ssize_t read;
+                char *line = NULL;
+                size_t len = 0;
+                fp = fopen(fn.c_str(), "r");
 
-                // Introduce random errors for checksum testing 
-                // 1% error on any line at some randome byte
-                int r = rand() % 100;
-
-                if(r == 0)
-                {
-                    printf("corrupting data\n");
-                    int rc = rand() % len;
-                    line[rc]++;
-                }
-
-                // Send this line of the file to the receiver
-                SendToSocket(socket, line, strlen(line));
                 recvSize = RecvFromSocket(socket, buffer);
                 buffer[recvSize] = '\0';
-                msg = strtok(buffer, ";");
-            }
+                char *msg = strtok(buffer, ";");
 
-            fclose(fp);
+                while(strcmp(msg, "next") == 0)
+                {
+                    read = getline(&line, &len, fp);
+                    if(read < 0)
+                    {
+                        sprintf(buffer, "%s", "end");
+                        SendToSocket(socket, buffer, strlen(buffer));
+                        break;
+                    }
+
+                    // Introduce random errors for checksum testing 
+                    // 1% error on any line at some randome byte
+
+                    char outline[len];
+                    strcpy(outline, line);
+
+                    int r = rand() % 200;
+
+                    if(r == 0)
+                    {
+                        printf("corrupting data\n");
+                        int rc = rand() % len;
+                        outline[rc] = 'X';
+                    }
+
+                    // Send this line of the file to the receiver
+                    SendToSocket(socket, outline, strlen(line));
+                    recvSize = RecvFromSocket(socket, buffer);
+                    buffer[recvSize] = '\0';
+                    msg = strtok(buffer, ";");
+                }
+
+                recvSize = RecvFromSocket(socket, buffer);
+                buffer[recvSize] = '\0';
+                printf("Buffer: %s\n", buffer);
+
+                if(strcmp(buffer, "done") == 0)
+                {
+                    printf("Received Success\n");
+                    success = true;
+                }
+                else
+                {
+                    printf("Starting over\n");
+                }
+
+                SendToSocket(socket, ack, strlen(ack));
+                fclose(fp);
+            }
         } 
         else 
         {
