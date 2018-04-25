@@ -19,6 +19,8 @@
 #include <map>
 
 struct sockaddr_in gAddress;
+int load = 0;
+int latency = 0;
 int gSocket;
 char *machID;
 void *(*gHandler)(void *);
@@ -190,6 +192,7 @@ void *TrackingServerHandler(void *args)
 
 void *FileServerHandler(void *args) 
 {
+    addLoad();
     int socket = *((int *)args);
     int recvSize;
     char buffer[MAX_LEN];
@@ -270,6 +273,11 @@ void *FileServerHandler(void *args)
 
             fclose(fp);
         }
+        else if (strcmp(command, "getload") == 0)
+        {
+            sprintf(buffer, "%d", load);
+            SendToSocket(socket, buffer, strlen(buffer));
+        }
         else 
         {
             printf("Command not recognized\n");
@@ -288,6 +296,7 @@ void *FileServerHandler(void *args)
     // Close the socket
     close(socket);
 
+    subLoad();
     return NULL;
 }
 
@@ -330,6 +339,7 @@ int ConnectToServer(char *serverIP, int serverPort, int clientPort)
 }
 
 int SendToSocket(int socket, char *buffer, int len) {
+    usleep(latency * 1000);     
     return send(socket, buffer, len, 0);
 }
 
@@ -345,4 +355,23 @@ void RecvACK(int socket) {
     if (strncmp("ACK", buffer, strlen("ACK") != 0)) {
         printf("Error, expected ACK to be received: %s \n", buffer);
     }
+}
+
+int getLoad()
+{
+    return load;
+}
+void addLoad()
+{
+    load++;
+}
+void subLoad()
+{
+    load--;
+}
+
+void setLatency(int lat)
+{
+    latency = lat;
+
 }

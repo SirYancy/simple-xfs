@@ -10,6 +10,13 @@ void StartListening();
 
 int getPort();
 
+int getLoad();
+
+void addLoad();
+void subLoad();
+
+void setLatency(int lat);
+
 int ConnectToServer(char *serverIP, int serverPort, int clientPort);
 
 int SendToSocket(int socket, char *buffer, int len);

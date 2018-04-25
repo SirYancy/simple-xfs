@@ -5,6 +5,8 @@
 #include <vector>
 #include <stdio.h>
 #include <unistd.h>
+#include <unordered_map>
+#include <fstream>
 
 #include "hash.h"
 #include "tcp.h"
@@ -17,17 +19,21 @@ struct serverDesc {
     int port;
 };
 
+unordered_map<string, int> latency_map;
+
 int gServerSocket = 0;
 int my_port = 0;
 int tracker_port = 0;
 char *tracker_ip;
 char *myID;
-int load = 0;
+
+int myLatency = 0;
 
 char filename[25];
 
 int live = 1;
 
+void parseLatency();
 void register_client(int socket, char *buffer);
 void find(int socket, char *buffer);
 void download(int socket, char *buffer);
@@ -52,6 +58,10 @@ int main(int argc, char* argv[]) {
     tracker_ip = argv[1];
     myID= argv[3];
 
+    // Set latency for all transactions
+    parseLatency();
+    setLatency(myLatency);
+
     InitFileServer(myID, 0);
 
     my_port = getPort();
@@ -66,6 +76,32 @@ int main(int argc, char* argv[]) {
     pthread_join(listenThread, NULL);
 
     return 0;
+}
+
+void parseLatency()
+{
+    string fn = "latency.conf";
+    ifstream infile(fn);
+    string line;
+    while(getline(infile, line))
+    {
+        char l[30];
+        strcpy(l,line.c_str());
+
+        char *id = strtok(l, ",");
+        char *lat = strtok(NULL, ",");
+        int lat_n = atoi(lat);
+        if(strcmp(id, myID) == 0)
+            myLatency = lat_n;
+        else
+            latency_map[id] = lat_n;
+    }
+
+    cout << "My Latency: " << myLatency << endl;
+    for(auto it = latency_map.begin(); it != latency_map.end(); ++it)
+    {
+        cout << it->first << " " << it->second << endl;
+    }
 }
 
 void *clientFunc(void *args)
@@ -167,6 +203,7 @@ void printserver(serverDesc s)
 
 void download(int socket, char *buffer)
 {
+    addLoad();
     printf("\nFilename: ");
     scanf("%[^\n]s", filename);
 
@@ -218,6 +255,7 @@ void download(int socket, char *buffer)
 
     updateList();
 
+    subLoad();
 }
 
 bool dl_check(string fn, serverDesc s)

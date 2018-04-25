@@ -45,6 +45,11 @@ void GetLoad(char *IP, int port, char *buffer) {
 
     // Prepare server socket
     serverSocket = ConnectToServer(IP, port, 0);
+
+    sprintf(buffer, "getload;");
+    SendToSocket(serverSocket, buffer, strlen(buffer));
+
+
 }
 
 void UpdateList(char *IP, int port) {
