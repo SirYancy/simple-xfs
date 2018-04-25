@@ -24,6 +24,7 @@ int latency = 0;
 int gSocket;
 char *machID;
 void *(*gHandler)(void *);
+void (*reInit)();
 
 std::vector<Client*> gClientList;
 
@@ -122,6 +123,13 @@ void *TrackingServerHandler(void *args)
     Client *c = new Client(port, ipString);
     gClientList.push_back(c);
 
+    // Connect to client's listener
+    int connsock = ConnectToServer(ip, port, 0);
+    recvSize = RecvFromSocket(connsock, buffer);
+    buffer[recvSize] = '\0';
+    sprintf(buffer, "tracker;");
+    SendToSocket(connsock, buffer, strlen(buffer));
+
     printf("Listening on new socket\n");
     while((recvSize = recv(socket, buffer, MAX_LEN, 0)) > 0) {
         buffer[recvSize] = '\0';
@@ -195,12 +203,11 @@ void *TrackingServerHandler(void *args)
 void *FileServerHandler(void *args) 
 {
     addLoad();
+    bool tracker = false;
     int socket = *((int *)args);
     int recvSize;
     char buffer[MAX_LEN];
     char *ack = "ACK";
-
-    srand(time(NULL));
 
     recvSize = recv(socket, buffer, MAX_LEN, 0);
     SendToSocket(socket, ack, strlen(ack));
@@ -209,7 +216,7 @@ void *FileServerHandler(void *args)
 
     while((recvSize = recv(socket, buffer, MAX_LEN, 0)) > 0) {
         buffer[recvSize] = '\0';
-        //
+
         // Handle requests from file server
         printf("buffer: %s \n", buffer);
 
@@ -217,6 +224,7 @@ void *FileServerHandler(void *args)
 
         if (strcmp(command, "download") == 0)
         {
+            srand(time(NULL));
             char *filename = strtok(NULL, ";");
 
             std::string fn = "";
@@ -281,6 +289,10 @@ void *FileServerHandler(void *args)
             sprintf(buffer, "%d", load);
             SendToSocket(socket, buffer, strlen(buffer));
         }
+        else if (strcmp(command, "tracker") == 0)
+        {
+            tracker = true;
+        }
         else 
         {
             printf("Command not recognized\n");
@@ -288,7 +300,14 @@ void *FileServerHandler(void *args)
     }
 
     if(recvSize == 0) {
-        printf("Client disconnected\n");
+        if(tracker)
+        {
+            printf("Tracker failed. Waiting for recovery\n");
+        }
+        else
+        {
+            printf("Client disconnected\n");
+        }
     } else if(recvSize == -1) {
         printf("Recv error\n");
     }
@@ -300,6 +319,13 @@ void *FileServerHandler(void *args)
     close(socket);
 
     subLoad();
+
+    if(tracker)
+    {
+        usleep(5000000);
+        reInit();
+    }
+
     return NULL;
 }
 
@@ -308,9 +334,10 @@ void InitTrackingServer(int port)
     InitServer(port, TrackingServerHandler);
 }
 
-void InitFileServer(char *id, int port)
+void InitFileServer(char *id, int port, void (*callback)())
 {
     machID = id;
+    reInit = callback;
     InitServer(port, FileServerHandler);
 }
 

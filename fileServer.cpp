@@ -35,6 +35,8 @@ char filename[25];
 
 int live = 1;
 
+void Init();
+
 void parseLatency();
 void register_client(int socket, char *buffer);
 void find(int socket, char *buffer);
@@ -64,7 +66,7 @@ int main(int argc, char* argv[]) {
     parseLatency();
     setLatency(myLatency);
 
-    InitFileServer(myID, 0);
+    InitFileServer(myID, 0, Init);
 
     my_port = getPort();
 
@@ -106,19 +108,13 @@ void parseLatency()
     }
 }
 
+
+
 void *clientFunc(void *args)
 {
-    int trackerSocket = ConnectToServer(tracker_ip, tracker_port, my_port);
-    gServerSocket = trackerSocket;
+    Init();
     char buffer[MAX_LEN];
     memset(buffer, '\0', MAX_LEN); 
-
-    // Wait for ACK from server
-    int len = RecvFromSocket(trackerSocket, buffer);
-    buffer[len] = '\0';
-    printf("From server: %s\n", buffer);
-
-    register_client(trackerSocket, buffer);
 
     int menu_choice;
 
@@ -126,13 +122,11 @@ void *clientFunc(void *args)
     {
         memset(buffer, '\0', MAX_LEN);
 
-        printf("Welcome, \n%s\n%s\n%s\n%s\n%s\n%s\n%s",
+        printf("Welcome, \n%s\n%s\n%s\n%s\n%s",
                 "What do you want to do?",
                 "1 - Find",
                 "2 - Download",
-                "3 - GetLoad",
-                "4 - UpdateList",
-                "5 - Exit",
+                "3 - Exit",
                 "> ");
         scanf("%d", &menu_choice);
 
@@ -143,18 +137,12 @@ void *clientFunc(void *args)
         switch(menu_choice)
         {
             case 1:
-                find(trackerSocket, buffer);
+                find(gServerSocket, buffer);
                 break;
             case 2: 
-                download(trackerSocket, buffer);
+                download(gServerSocket, buffer);
                 break;
             case 3:
-                // TODO Get load
-                break;
-            case 4:
-                // TODO Upadte List
-                break;
-            case 5:
                 printf("Exiting\n");
                 live = 0;
                 break;
@@ -196,7 +184,6 @@ void find(int socket, char *buffer)
     cout << "Servers with file: " << filename <<
         endl << buffer << endl;
 }
-
 
 void printserver(serverDesc s)
 {
@@ -378,4 +365,18 @@ void *listenerFunc(void *args)
         // This blocks in the StartListening() function anyway.
     }
     return NULL;
+}
+
+void Init()
+{
+    char buffer[MAX_LEN];
+    int trackerSocket = ConnectToServer(tracker_ip, tracker_port, my_port);
+    gServerSocket = trackerSocket;
+
+    // Wait for ACK from server
+    int len = RecvFromSocket(trackerSocket, buffer);
+    buffer[len] = '\0';
+    printf("From server: %s\n", buffer);
+
+    register_client(trackerSocket, buffer);
 }

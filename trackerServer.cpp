@@ -4,7 +4,6 @@
 
 using namespace std;
 
-int gServerSocket = 0;
 int main(int argc, char* argv[]) {
 
     if(argc != 2)
