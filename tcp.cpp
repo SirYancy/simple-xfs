@@ -147,6 +147,7 @@ void *TrackingServerHandler(void *args)
 
             SendToSocket(socket, buffer, strlen(buffer));
         } else if (strcmp(command, "register") == 0) {
+            // New client is registering with the server
             char *machid = strtok(NULL, ";");
 
             printf("registering: %s\n", machid);
@@ -163,6 +164,7 @@ void *TrackingServerHandler(void *args)
             c->setID(machid);
             c->updateFileList(fileList);
         } else if (strcmp(command, "update") == 0) {
+            // Client is updating its file list
             printf("Updating file list for: %s\n", c->getID());
 
             char *filename = strtok(NULL, ";");
@@ -200,6 +202,10 @@ void *TrackingServerHandler(void *args)
     return NULL;
 }
 
+/**
+ * An instance of this function is run each time a new connection is made with 
+ * one of the file servers.
+ */
 void *FileServerHandler(void *args) 
 {
     addLoad();
@@ -224,31 +230,38 @@ void *FileServerHandler(void *args)
 
         if (strcmp(command, "download") == 0)
         {
+            // A client is downloading from me.
             srand(time(NULL));
             char *filename = strtok(NULL, ";");
 
+            // Get the filename
             std::string fn = "";
 
             fn.append(machID);
             fn.append("/");
             fn.append(filename);
 
+            // Calculate the hash
             size_t checksum = get_hash(fn);
 
             snprintf(buffer, sizeof(buffer), "%zu", checksum);
 
+            // Send the hash to the client
             SendToSocket(socket, buffer, strlen(buffer));
 
             FILE *fp;
             ssize_t read;
             char *line = NULL;
             size_t len = 0;
+
+            // Open the file
             fp = fopen(fn.c_str(), "r");
 
             recvSize = RecvFromSocket(socket, buffer);
             buffer[recvSize] = '\0';
             char *msg = strtok(buffer, ";");
 
+            // Wait for messages from the client and send the file line by line.
             while(strcmp(msg, "next") == 0)
             {
                 read = getline(&line, &len, fp);

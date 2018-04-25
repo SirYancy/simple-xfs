@@ -72,7 +72,10 @@ int main(int argc, char* argv[]) {
 
     cout << "Client starting on port " << my_port << endl;
 
+    // Thread which listens for incoming connecitons
     pthread_create(&listenThread, NULL, listenerFunc, NULL);
+
+    // UI Thread
     pthread_create(&clientThread, NULL, clientFunc, NULL);
 
     while(live){}
@@ -82,6 +85,9 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
+/** Parses the latency.conf file so it knows
+ * what every client's latency values are.
+ */
 void parseLatency()
 {
     string fn = "latency.conf";
@@ -100,18 +106,14 @@ void parseLatency()
         else
             latency_map[id] = lat_n;
     }
-
-    cout << "My Latency: " << myLatency << endl;
-    for(auto it = latency_map.begin(); it != latency_map.end(); ++it)
-    {
-        cout << it->first << " " << it->second << endl;
-    }
 }
 
-
-
+/**
+ * UI Thread function
+ */
 void *clientFunc(void *args)
 {
+    // Initialize and connect to tracker server
     Init();
     char buffer[MAX_LEN];
     memset(buffer, '\0', MAX_LEN); 
@@ -154,6 +156,9 @@ void *clientFunc(void *args)
     return NULL;
 }
 
+/**
+ * Register with the tracker server
+ */
 void register_client(int socket, char *buffer)
 {
     printf("registering client...\n");
@@ -165,6 +170,9 @@ void register_client(int socket, char *buffer)
     SendToSocket(socket, buffer, strlen(buffer));
 }
 
+/**
+ * Find a file on the tracker
+ */
 void find(int socket, char *buffer)
 {
     printf("\nFilename: ");
@@ -190,6 +198,10 @@ void printserver(serverDesc s)
     cout << s.machid << " " << s.ip << " " << s.port << endl;
 }
 
+/**
+ * Find a file, get each server's latency, decide which
+ * server to download from, and download.
+ */
 void download(int socket, char *buffer)
 {
     addLoad();
@@ -263,6 +275,9 @@ void download(int socket, char *buffer)
     subLoad();
 }
 
+/**
+ * Actually download the file and verify its hash.
+ */
 bool dl_check(string fn, serverDesc s)
 {
     int len;
