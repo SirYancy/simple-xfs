@@ -11,6 +11,12 @@
 
 using namespace std;
 
+struct serverDesc {
+    char machid[20];
+    char ip[20];
+    int port;
+};
+
 int gServerSocket = 0;
 int my_port = 0;
 int tracker_port = 0;
@@ -25,9 +31,10 @@ int live = 1;
 void register_client(int socket, char *buffer);
 void find(int socket, char *buffer);
 void download(int socket, char *buffer);
-void updateList(int socket, char *buffer);
+void updateList();
 void readDirectory(char *buffer, char *folder);
 
+bool dl_check(string fn, serverDesc s);
 void *listenerFunc(void *args);
 void *clientFunc(void *args);
 
@@ -152,11 +159,6 @@ void find(int socket, char *buffer)
         endl << buffer << endl;
 }
 
-struct serverDesc {
-    char machid[20];
-    char ip[20];
-    int port;
-};
 
 void printserver(serverDesc s)
 {
@@ -201,6 +203,28 @@ void download(int socket, char *buffer)
     // For now, it's just going to download from the first one.
 
     serverDesc s = servers[0]; // TODO replace this
+
+    string fn = "";
+
+    fn.append(myID);
+    fn.append("/");
+    fn.append(filename);
+
+    bool integrity = false;
+
+    while(!integrity){
+        integrity = dl_check(fn, s);
+    }
+
+    updateList();
+
+}
+
+bool dl_check(string fn, serverDesc s)
+{
+    int len;
+    char buffer[MAX_LEN];
+
     printf("Connecting to server %s:%d\n", s.ip, s.port);
     int dlSocket = ConnectToServer(s.ip, s.port, my_port);
 
@@ -218,76 +242,51 @@ void download(int socket, char *buffer)
     char *check = strtok(buffer, ";");
     char check_r[strlen(check)];
     strcpy(check_r, check);
+    FILE *fp;
+    remove(fn.c_str());
+    fp = fopen(fn.c_str(), "a");
 
-    string fn = "";
-
-    fn.append(myID);
-    fn.append("/");
-    fn.append(filename);
-
-    bool integrity = false;
-
-    while(!integrity){
-        FILE *fp;
-        remove(fn.c_str());
-        fp = fopen(fn.c_str(), "a");
-
-        while(buffer != NULL)
-        {
-            sprintf(buffer, "%s", "next");
-            SendToSocket(dlSocket, buffer, strlen(buffer));
-            len = RecvFromSocket(dlSocket, buffer);
-            buffer[len] = '\0';
-            if(strcmp(buffer, "end") == 0)
-            {
-                break;
-            }
-            fprintf(fp, buffer);
-        }
-
-        fclose(fp);
-
-        size_t check_n = get_hash(fn);
-
-        char check_l[strlen(check_r)+1];
-        snprintf(check_l, sizeof(check_l), "%zu", check_n);
-
-        cout << "Remote Checksum: " << check_r << endl
-            <<  "Local  Checksum: " << check_l << endl;
-
-        char cmd[10];
-        if(strcmp(check_r, check_l) == 0)
-        {
-            cout << "Checksum Succeeded!" << endl;
-            integrity = true;
-            sprintf(cmd, "%s", "done");
-        }
-        else
-        {
-            cout << "Checksum failed!" << endl;
-            sprintf(cmd, "%s", "restart");
-        }
-
-        // Inform DL Server of success/failure of checksum
-        SendToSocket(dlSocket, cmd, strlen(cmd));
+    while(buffer != NULL)
+    {
+        sprintf(buffer, "%s", "next;");
+        SendToSocket(dlSocket, buffer, strlen(buffer));
         len = RecvFromSocket(dlSocket, buffer);
         buffer[len] = '\0';
-        printf("Acknowledged: %s\n", buffer);
-
+        if(strcmp(buffer, "end") == 0)
+        {
+            break;
+        }
+        fprintf(fp, buffer);
     }
 
     close(dlSocket);
+    fclose(fp);
 
+    size_t check_n = get_hash(fn);
+
+    char check_l[strlen(check_r)+1];
+    snprintf(check_l, sizeof(check_l), "%zu", check_n);
+
+    cout << "Remote Checksum: " << check_r << endl
+        <<  "Local  Checksum: " << check_l << endl;
+
+    if(strcmp(check_r, check_l) == 0)
+    {
+        cout << "Checksum Succeeded!" << endl;
+        return true;
+    }
+
+    cout << "Checksum failed!" << endl;
+    return false;
+}
+
+void updateList()
+{
     //Update File List on tracker
+    char buffer[MAX_LEN];
     sprintf(buffer, "update;");
     readDirectory(buffer, myID);
     SendToSocket(gServerSocket, buffer, strlen(buffer));
-
-}
-
-void updateList(int socket, char *buffer)
-{
-    //TODO
 }
 
 void readDirectory(char* buffer, char* folder) 

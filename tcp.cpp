@@ -226,69 +226,50 @@ void *FileServerHandler(void *args)
 
             SendToSocket(socket, buffer, strlen(buffer));
 
-            bool success = false;
-            while(!success)
+            FILE *fp;
+            ssize_t read;
+            char *line = NULL;
+            size_t len = 0;
+            fp = fopen(fn.c_str(), "r");
+
+            recvSize = RecvFromSocket(socket, buffer);
+            buffer[recvSize] = '\0';
+            char *msg = strtok(buffer, ";");
+
+            while(strcmp(msg, "next") == 0)
             {
-                FILE *fp;
-                ssize_t read;
-                char *line = NULL;
-                size_t len = 0;
-                fp = fopen(fn.c_str(), "r");
+                read = getline(&line, &len, fp);
+                if(read < 0)
+                {
+                    sprintf(buffer, "%s", "end");
+                    SendToSocket(socket, buffer, strlen(buffer));
+                    break;
+                }
 
+                // Introduce random errors for checksum testing 
+                // 1% error on any line at some randome byte
+
+                char outline[len];
+                strcpy(outline, line);
+
+                int r = rand() % 200;
+
+                if(r == 0)
+                {
+                    printf("corrupting data\n");
+                    int rc = rand() % len;
+                    outline[rc] = 'X';
+                }
+
+                // Send this line of the file to the receiver
+                SendToSocket(socket, outline, strlen(line));
                 recvSize = RecvFromSocket(socket, buffer);
                 buffer[recvSize] = '\0';
-                char *msg = strtok(buffer, ";");
+                msg = strtok(buffer, ";");
+            } 
 
-                while(strcmp(msg, "next") == 0)
-                {
-                    read = getline(&line, &len, fp);
-                    if(read < 0)
-                    {
-                        sprintf(buffer, "%s", "end");
-                        SendToSocket(socket, buffer, strlen(buffer));
-                        break;
-                    }
-
-                    // Introduce random errors for checksum testing 
-                    // 1% error on any line at some randome byte
-
-                    char outline[len];
-                    strcpy(outline, line);
-
-                    int r = rand() % 200;
-
-                    if(r == 0)
-                    {
-                        printf("corrupting data\n");
-                        int rc = rand() % len;
-                        outline[rc] = 'X';
-                    }
-
-                    // Send this line of the file to the receiver
-                    SendToSocket(socket, outline, strlen(line));
-                    recvSize = RecvFromSocket(socket, buffer);
-                    buffer[recvSize] = '\0';
-                    msg = strtok(buffer, ";");
-                }
-
-                recvSize = RecvFromSocket(socket, buffer);
-                buffer[recvSize] = '\0';
-                printf("Buffer: %s\n", buffer);
-
-                if(strcmp(buffer, "done") == 0)
-                {
-                    printf("Received Success\n");
-                    success = true;
-                }
-                else
-                {
-                    printf("Starting over\n");
-                }
-
-                SendToSocket(socket, ack, strlen(ack));
-                fclose(fp);
-            }
-        } 
+            fclose(fp);
+        }
         else 
         {
             printf("Command not recognized\n");
