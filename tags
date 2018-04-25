@@ -16,7 +16,7 @@ FUNC_H	func.h	2;"	d
 FileServerHandler	tcp.cpp	/^void *FileServerHandler(void *args) $/;"	f
 FindFile	func.cpp	/^void FindFile(char *filename, vector<Client*>* clients, char *buffer)$/;"	f
 GetFileList	file.cpp	/^int GetFileList(char *buffer) {$/;"	f
-GetLoad	func.cpp	/^void GetLoad(char *IP, int port, char *buffer) {$/;"	f
+GetLoad	func.cpp	/^int GetLoad(char *IP, int port, char *buffer) {$/;"	f
 HASH_H	hash.h	2;"	d
 InitFileServer	tcp.cpp	/^void InitFileServer(char *id, int port)$/;"	f
 InitServer	tcp.cpp	/^void InitServer(int port, void *(*handler)(void *))$/;"	f
@@ -30,6 +30,7 @@ StartListening	tcp.cpp	/^void StartListening()$/;"	f
 TCP_H	tcp.h	2;"	d
 TrackingServerHandler	tcp.cpp	/^void *TrackingServerHandler(void *args) $/;"	f
 UpdateList	func.cpp	/^void UpdateList(char *IP, int port) {$/;"	f
+addLoad	tcp.cpp	/^void addLoad()$/;"	f
 clientFunc	fileServer.cpp	/^void *clientFunc(void *args)$/;"	f
 debug_print	debug.h	6;"	d
 dl_check	fileServer.cpp	/^bool dl_check(string fn, serverDesc s)$/;"	f
@@ -48,24 +49,29 @@ gSocket	tcp.cpp	/^int gSocket;$/;"	v
 getFileList	Client.cpp	/^vector<string> Client::getFileList()$/;"	f	class:Client
 getID	Client.cpp	/^string Client::getID() const$/;"	f	class:Client
 getIP	Client.cpp	/^string Client::getIP() const$/;"	f	class:Client
+getLoad	tcp.cpp	/^int getLoad()$/;"	f
 getPort	Client.cpp	/^int Client::getPort() const$/;"	f	class:Client
 getPort	tcp.cpp	/^int getPort()$/;"	f
 get_hash	hash.cpp	/^size_t get_hash(string fn)$/;"	f
 id	Client.h	/^        string id;$/;"	m	class:Client
 ip	Client.h	/^        string ip;$/;"	m	class:Client
 ip	fileServer.cpp	/^    char ip[20];$/;"	m	struct:serverDesc	file:
+latency	tcp.cpp	/^int latency = 0;$/;"	v
+latency_map	fileServer.cpp	/^unordered_map<string, int> latency_map;$/;"	v
 listenerFunc	fileServer.cpp	/^void *listenerFunc(void *args)$/;"	f
 live	fileServer.cpp	/^int live = 1;$/;"	v
-load	fileServer.cpp	/^int load = 0;$/;"	v
+load	tcp.cpp	/^int load = 1;$/;"	v
 machID	tcp.cpp	/^char *machID;$/;"	v
 machid	fileServer.cpp	/^    char machid[20];$/;"	m	struct:serverDesc	file:
 main	fileServer.cpp	/^int main(int argc, char* argv[]) {$/;"	f
 main	trackerServer.cpp	/^int main(int argc, char* argv[]) {$/;"	f
 myID	fileServer.cpp	/^char *myID;$/;"	v
+myLatency	fileServer.cpp	/^int myLatency = 0;$/;"	v
 my_port	fileServer.cpp	/^int my_port = 0;$/;"	v
 operator !=	Client.cpp	/^bool operator!=(const Client &c1, const Client &c2)$/;"	f
 operator ()	hash.cpp	/^    size_t operator()(string fn)$/;"	f	struct:MyHash
 operator ==	Client.cpp	/^bool operator==(const Client &c1, const Client &c2)$/;"	f
+parseLatency	fileServer.cpp	/^void parseLatency()$/;"	f
 port	Client.h	/^        int port;$/;"	m	class:Client
 port	fileServer.cpp	/^    int port;$/;"	m	struct:serverDesc	file:
 printserver	fileServer.cpp	/^void printserver(serverDesc s)$/;"	f
@@ -73,6 +79,8 @@ readDirectory	fileServer.cpp	/^void readDirectory(char* buffer, char* folder) $/
 register_client	fileServer.cpp	/^void register_client(int socket, char *buffer)$/;"	f
 serverDesc	fileServer.cpp	/^struct serverDesc {$/;"	s	file:
 setID	Client.cpp	/^void Client::setID(const string machid)$/;"	f	class:Client
+setLatency	tcp.cpp	/^void setLatency(int lat)$/;"	f
+subLoad	tcp.cpp	/^void subLoad()$/;"	f
 tracker_ip	fileServer.cpp	/^char *tracker_ip;$/;"	v
 tracker_port	fileServer.cpp	/^int tracker_port = 0;$/;"	v
 updateFileList	Client.cpp	/^void Client::updateFileList(vector<string> fl)$/;"	f	class:Client

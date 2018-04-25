@@ -7,7 +7,9 @@
 #include <unistd.h>
 #include <unordered_map>
 #include <fstream>
+#include <limits>
 
+#include "func.h"
 #include "hash.h"
 #include "tcp.h"
 
@@ -236,10 +238,26 @@ void download(int socket, char *buffer)
         id = strtok(NULL, ";");
     }
 
-    // TODO Get loads and latencies of servers to choose which server. 
-    // For now, it's just going to download from the first one.
+    int currValue = numeric_limits<int>::max();
+    serverDesc s;
 
-    serverDesc s = servers[0]; // TODO replace this
+    for(auto it = servers.begin(); it != servers.end(); ++it)
+    {
+        memset(buffer, '\0', MAX_LEN); 
+        int load = GetLoad((*it).ip, (*it).port, buffer);
+        int latency = latency_map[(*it).machid];
+        int value = load * latency;
+
+        cout << "load: " << load << " latency: " << latency << endl;
+
+        if(value < currValue)
+        {
+            currValue = value;
+            s = (*it);
+        }
+    }
+
+    printf("Selected Server: %s, Value: %d\n", s.machid, currValue);
 
     string fn = "";
 

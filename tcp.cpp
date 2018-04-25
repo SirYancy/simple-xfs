@@ -19,7 +19,7 @@
 #include <map>
 
 struct sockaddr_in gAddress;
-int load = 0;
+int load = 1;
 int latency = 0;
 int gSocket;
 char *machID;
@@ -31,6 +31,8 @@ std::multimap<char*, char*> fileMap;
 
 void InitServer(int port, void *(*handler)(void *))
 {
+    // initialize load to a non-zero value
+    load = 1;
     // Create socket
     gSocket = socket(AF_INET, SOCK_STREAM , IPPROTO_TCP);
 
@@ -275,6 +277,7 @@ void *FileServerHandler(void *args)
         }
         else if (strcmp(command, "getload") == 0)
         {
+            printf("current load: %d\n", load);
             sprintf(buffer, "%d", load);
             SendToSocket(socket, buffer, strlen(buffer));
         }

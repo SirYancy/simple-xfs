@@ -38,18 +38,27 @@ void DownloadFile(char *IP, int port, char *buffer)
 
 }
 
-void GetLoad(char *IP, int port, char *buffer) {
+/**
+ * Get load from a file server
+ */
+int GetLoad(char *IP, int port, char *buffer) {
     // Get the load from a specific file server
     int serverSocket;
-    // char buffer[MAX_LEN];
 
     // Prepare server socket
     serverSocket = ConnectToServer(IP, port, 0);
 
+    // Get ACK
+    int len = RecvFromSocket(serverSocket, buffer);
+
     sprintf(buffer, "getload;");
     SendToSocket(serverSocket, buffer, strlen(buffer));
-
-
+    len = RecvFromSocket(serverSocket, buffer);
+    printf("LOAD: %s\n", buffer);
+    buffer[len] = '\0';
+    
+    int load = atoi(buffer);
+    return load;
 }
 
 void UpdateList(char *IP, int port) {

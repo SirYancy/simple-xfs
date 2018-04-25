@@ -24,9 +24,4 @@ int RecvFromSocket(int socket, char *buffer);
 
 void RecvACK(int socket);
 
-void FindFile(char *IP, int port, char *buffer);
-void DownloadFile(char *IP, int port, char *buffer);
-void GetLoad(char *IP, int port, char *buffer);
-void UpdateList(char *IP, int port);
-
 #endif //TCP_H
