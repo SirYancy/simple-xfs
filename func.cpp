@@ -12,11 +12,12 @@ void FindFile(char *filename, vector<Client*>* clients, char *buffer)
     printf("trying to find file\n");
     std::string fn(filename);
     std::string serverList;
-
+    int found = 0;
     for (auto it = clients->begin(); it != clients->end(); ++it)
     {
         if((*it)->findFile(fn))
         {
+	    found++;
             std::string id = (*it)->getID();
             std::string ip = (*it)->getIP();
             int port = (*it)->getPort();
@@ -29,8 +30,12 @@ void FindFile(char *filename, vector<Client*>* clients, char *buffer)
             serverList.append(";");
         }
     }
-
-    strcpy(buffer, serverList.c_str());
+    if (found != 0) {
+	strcpy(buffer, serverList.c_str());
+    }
+    else { 
+	strcpy(buffer, "Unable to find file");
+    }
 }
 
 void DownloadFile(char *IP, int port, char *buffer)
