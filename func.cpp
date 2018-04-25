@@ -47,20 +47,17 @@ void GetLoad(char *IP, int port, char *buffer) {
     serverSocket = ConnectToServer(IP, port, 0);
 }
 
-void UpdateList(char *IP, int port) {
+void UpdateList(int serverSocket, char *buffer, char* ID) {
+    
     // Send the file list to tracking server
-    int serverSocket, len;
-    char buffer[MAX_LEN];
-
-    // Prepare server socket
-    serverSocket = ConnectToServer(IP, port, 0);
+    int  len;
 
     // Prepare file list
-    len = GetFileList(buffer);
-
+    len = GetFileList(buffer, ID);
+    
     // Send buffer to tracking server
     SendToSocket(serverSocket, buffer, len);
 
     // Wait for ACK
-    RecvACK(serverSocket);
+//    RecvACK(serverSocket);
 }

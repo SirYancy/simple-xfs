@@ -4,14 +4,19 @@
 #include <string.h>
 #include <dirent.h>
 
-int GetFileList(char *buffer) {
+int GetFileList(char *buffer, char *ID) {
     struct dirent *entry;
 
+    sprintf(buffer, "register;%s;", ID);
     // Open current directory
-    DIR *dr = opendir(".");
+    char folder[25];
+    strcpy(folder, ID);
+    printf("folder %s\n", folder);
+    DIR *dr = opendir(folder);
 
     if (dr == NULL) {
         printf("Could not open current directory\n" );
+	std::cerr << strerror(errno) <<std::endl;
         return 0;
     }
 
@@ -25,7 +30,6 @@ int GetFileList(char *buffer) {
             strcat(buffer, ";");
         }
     }
-
     closedir(dr);
     return strlen(buffer);
 }

@@ -1,9 +1,6 @@
 #ifndef TCP_H
 #define TCP_H
 
-extern int gServerSocket;
-extern int tracker_port; 
-extern char *tracker_ip;
 #define MAX_LEN 1024
 
 void InitTrackingServer(int port);
@@ -14,7 +11,7 @@ void StartListening();
 int getPort();
 
 int ConnectToServer(char *serverIP, int serverPort, int clientPort);
-
+int ConnectClientToServer(char *serverIP, int serverPort, int clientPort, char* ID);
 int SendToSocket(int socket, char *buffer, int len);
 int RecvFromSocket(int socket, char *buffer);
 

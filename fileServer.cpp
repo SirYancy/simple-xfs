@@ -11,13 +11,11 @@
 
 using namespace std;
 
-int gServerSocket = 0;
 int my_port = 0;
 int tracker_port = 0;
 char *tracker_ip;
-char *myID;
 int load = 0;
-
+char *myID;
 char filename[25];
 
 int live = 1;
@@ -63,11 +61,11 @@ int main(int argc, char* argv[]) {
 
 void *clientFunc(void *args)
 {
-    int trackerSocket = ConnectToServer(tracker_ip, tracker_port, my_port);
+    int trackerSocket = ConnectClientToServer(tracker_ip, tracker_port, my_port, myID);
     char buffer[MAX_LEN];
     memset(buffer, '\0', MAX_LEN); 
 
-    register_client(trackerSocket, buffer);
+//    register_client(trackerSocket, buffer);
 
     int menu_choice;
 

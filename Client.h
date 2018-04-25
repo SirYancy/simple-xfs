@@ -16,7 +16,7 @@ class Client{
 
     public:
         Client(const int, const string);
-        string getID() const;
+	string getID() const;
         void setID(const string);
         int getPort() const;
         string getIP() const;
